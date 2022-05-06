@@ -13,14 +13,14 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace CNCTestUI
+namespace CNCTestUI.Views
 {
     /// <summary>
-    /// MainWindow.xaml 的交互逻辑
+    /// AxisView.xaml 的交互逻辑
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class AxisView : UserControl
     {
-        public MainWindow()
+        public AxisView()
         {
             InitializeComponent();
         }
