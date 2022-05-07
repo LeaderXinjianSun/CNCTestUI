@@ -497,6 +497,7 @@
             Margin="10"
             HorizontalAlignment="Right"
             VerticalAlignment="Bottom"
+            Command="{Binding SaveParamCommand}"
             Content="保存" />
     </Grid>
 </UserControl>

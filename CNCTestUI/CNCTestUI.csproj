@@ -97,6 +97,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Models\Param.cs" />
     <Compile Include="Views\AxisView.xaml.cs">
       <DependentUpon>AxisView.xaml</DependentUpon>
     </Compile>
