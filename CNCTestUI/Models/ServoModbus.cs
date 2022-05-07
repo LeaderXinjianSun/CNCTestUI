@@ -1,4 +1,5 @@
 ﻿using NModbus;
+using NModbus.Serial;
 using System;
 using System.Collections.Generic;
 using System.IO.Ports;
@@ -64,7 +65,7 @@ namespace CNCTestUI.Models
 					this.serialPort.WriteTimeout = 500;
 					this.serialPort.ReadTimeout = 500;
 					var factory = new ModbusFactory();
-					master = factory.CreateRtuMaster((NModbus.IO.IStreamResource)serialPort);
+					master = factory.CreateRtuMaster(serialPort);
 					return true;
 				}
 			}

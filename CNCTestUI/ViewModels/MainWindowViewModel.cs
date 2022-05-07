@@ -302,10 +302,22 @@ namespace CNCTestUI.ViewModels
         #region 构造函数
         public MainWindowViewModel()
         {
+            GTSCard.Instance.StateUpdateEvent += Instance_StateUpdateEvent;
+            GTSCard.Instance.MessagePrintEvent += Instance_MessagePrintEvent;
             MotionJogSelectedIndex = 0;
             axisParm = GTSCard.Instance.X1;
             GTSCard.Instance.Init();
             UIRun();
+        }
+        #endregion
+        #region 时间函数
+        private void Instance_MessagePrintEvent(object sender, string message)
+        {
+            addMessage($"{sender}:{message}");
+        }
+        private void Instance_StateUpdateEvent(object sender, string status)
+        {
+            AxisCardConnectState = status == "连接";
         }
         #endregion
         #region 功能函数
