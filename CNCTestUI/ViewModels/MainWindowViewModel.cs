@@ -307,10 +307,11 @@ namespace CNCTestUI.ViewModels
             MotionJogSelectedIndex = 0;
             axisParm = GTSCard.Instance.X1;
             GTSCard.Instance.Init();
+            ServoModbus.Instance.Connect("COM7");
             UIRun();
         }
         #endregion
-        #region 时间函数
+        #region 事件函数
         private void Instance_MessagePrintEvent(object sender, string message)
         {
             addMessage($"{sender}:{message}");
@@ -329,10 +330,10 @@ namespace CNCTestUI.ViewModels
                 {
                     if (GTSCard.Instance.OpenCardOk)
                     {
-                        X_Enc = GTSCard.Instance.GetEnc(GTSCard.Instance.X1);
-                        Y_Enc = GTSCard.Instance.GetEnc(GTSCard.Instance.Y1);
-                        Z_Enc = GTSCard.Instance.GetEnc(GTSCard.Instance.Z1);
-                        R_Enc = GTSCard.Instance.GetEnc(GTSCard.Instance.R1);
+                        X_Enc = (double)ServoModbus.Instance.ReadInovance(1) / 1000;
+                        Y_Enc = (double)ServoModbus.Instance.ReadInovance(2) / 1000;
+                        Z_Enc = (double)ServoModbus.Instance.ReadInovance(3) / 1000;
+                        R_Enc = (double)ServoModbus.Instance.ReadInovance(4) / 1000;
                         if (AxisViewVisibility == "Visible")
                         {
                             AxisStatus axisStatus = GTSCard.Instance.GetAxisStatus(axisParm);
