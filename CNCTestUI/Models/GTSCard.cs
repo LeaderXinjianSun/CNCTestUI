@@ -373,6 +373,49 @@ namespace CNCTestUI.Models
             int option = fifo;
             gts.mc.GT_PtStart(_AxisParam.CardNo, 1 << (_AxisParam.AxisId - 1), option << (_AxisParam.AxisId - 1));//启动FIFO的PT运动
         }
+        public void AxisArcMove(double startx,double starty,double xCenter,double yCenter, double speed)
+        {
+            gts.mc.TCrdPrm crdPrm;
+
+            crdPrm.dimension = 2;                        // 建立三维的坐标系
+            crdPrm.synVelMax = 500;                      // 坐标系的最大合成速度是: 500 pulse/ms
+            crdPrm.synAccMax = 2;                        // 坐标系的最大合成加速度是: 2 pulse/ms^2
+            crdPrm.evenTime = 0;                         // 坐标系的最小匀速时间为0
+            crdPrm.profile1 = 1;                       // 规划器1对应到X轴                       
+            crdPrm.profile2 = 2;                       // 规划器2对应到Y轴
+            crdPrm.profile3 = 0;                       // 规划器3对应到Z轴
+            crdPrm.profile4 = 0;
+            crdPrm.profile5 = 0;
+            crdPrm.profile6 = 0;
+            crdPrm.profile7 = 0;
+            crdPrm.profile8 = 0;
+            crdPrm.setOriginFlag = 1;                    // 需要设置加工坐标系原点位置
+            crdPrm.originPos1 = 0;                     // 加工坐标系原点位置在(0,0,0)，即与机床坐标系原点重合
+            crdPrm.originPos2 = 0;
+            crdPrm.originPos3 = 0;
+            crdPrm.originPos4 = 0;
+            crdPrm.originPos5 = 0;
+            crdPrm.originPos6 = 0;
+            crdPrm.originPos7 = 0;
+            crdPrm.originPos8 = 0;
+
+            gts.mc.GT_SetCrdPrm(0, 1, ref crdPrm);
+            // 即将把数据存入坐标系1的FIFO0中，所以要首先清除此缓存区中的数据
+            gts.mc.GT_CrdClear(0, 1, 0);
+
+            // 向缓存区写入第二段插补数据，该段数据是以圆心描述方法描述了一个整圆
+            gts.mc.GT_ArcXYC(0,
+                1,					// 坐标系是坐标系1
+                (int)(startx / X1.Equiv), (int)(starty / Y1.Equiv),			// 该圆弧的终点坐标(0, 0)用户设置的起点坐标和终点坐标重合时，则表示将要进行一个整圆的运动
+                xCenter / X1.Equiv, yCenter / Y1.Equiv,			// 圆弧插补的圆心相对于起点位置的偏移量(-100000, 0)
+                0,					// 该圆弧是顺时针圆弧
+                speed / X1.Equiv / 1000,					// 该插补段的目标速度：100pulse/ms
+                0.1,					// 该插补段的加速度：0.1pulse/ms^2
+                0,					// 终点速度为0
+                0);                 // 向坐标系1的FIFO0缓存区传递该直线插补数据
+                                    // 启动坐标系1的FIFO0的插补运动
+            sRtn = gts.mc.GT_CrdStart(0, 1, 0);
+        }
         public bool AxisCheckDone(AxisParm _AxisParam)
         {
             int AxisStatus = 0;

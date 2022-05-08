@@ -21,6 +21,7 @@ namespace CNCTestUI.ViewModels
         AxisParm axisParm = default;
         Param myParam;
         string serialCOM = "COM7";
+        CancellationTokenSource source;
         #endregion
         #region 属性绑定
         private string title = "CNCTestUI";
@@ -270,11 +271,67 @@ namespace CNCTestUI.ViewModels
         private DelegateCommand<object> goPositionCommand;
         public DelegateCommand<object> GoPositionCommand =>
             goPositionCommand ?? (goPositionCommand = new DelegateCommand<object>(ExecuteGoPositionCommand));
+        private DelegateCommand appLoadedEventCommand;
+        public DelegateCommand AppLoadedEventCommand =>
+            appLoadedEventCommand ?? (appLoadedEventCommand = new DelegateCommand(ExecuteAppLoadedEventCommand));
+        private DelegateCommand appClosedEventCommand;
+        public DelegateCommand AppClosedEventCommand =>
+            appClosedEventCommand ?? (appClosedEventCommand = new DelegateCommand(ExecuteAppClosedEventCommand));
+        private DelegateCommand<object> operateButtonCommand;
+        public DelegateCommand<object> OperateButtonCommand =>
+            operateButtonCommand ?? (operateButtonCommand = new DelegateCommand<object>(ExecuteOperateButtonCommand));
 
+        async void ExecuteOperateButtonCommand(object obj)
+        {
+            switch (obj.ToString())
+            {
+                case "0":
+                    {
+                        source = new CancellationTokenSource();
+                        CancellationToken token = source.Token;
+                        IsAxisBusy = true;
+                        await Task.Run(() => ARCMotion(token, 100, 100), token).ContinueWith(t => IsAxisBusy = false);
+                    }
+                    break;
+                case "1":
+                    if (source != null)
+                    {
+                        source.Cancel();
+                    }
+                    GTSCard.Instance.AxisStop(GTSCard.Instance.X1, 1);
+                    GTSCard.Instance.AxisStop(GTSCard.Instance.Y1, 1);
+                    GTSCard.Instance.AxisStop(GTSCard.Instance.Z1, 1);
+                    GTSCard.Instance.AxisStop(GTSCard.Instance.R1, 1);
+                    IsAxisBusy = false;
+                    break;
+                default:
+                    break;
+            }
+        }
+        void ExecuteAppClosedEventCommand()
+        {
+            try
+            {
+                if (source != null)
+                {
+                    source.Cancel();
+                }
+                ResetAction();
+            }
+            catch { }
+        }
+        void ExecuteAppLoadedEventCommand()
+        {
+
+        }
         async void ExecuteGoPositionCommand(object obj)
         {
-            CancellationTokenSource source = new CancellationTokenSource();
+            source = new CancellationTokenSource();
             CancellationToken token = source.Token;
+            GTSCard.Instance.ServoOn(GTSCard.Instance.X1);
+            GTSCard.Instance.ServoOn(GTSCard.Instance.Y1);
+            GTSCard.Instance.ServoOn(GTSCard.Instance.Z1);
+            GTSCard.Instance.ServoOn(GTSCard.Instance.R1);
             switch (obj.ToString())
             {
                 case "0":
@@ -391,6 +448,50 @@ namespace CNCTestUI.ViewModels
                 System.Threading.Thread.Sleep(100);
             }
         }
+        private void ARCMotion(CancellationToken token,double xCenter,double yCenter)
+        {
+            double speed = X1RunSpeed;
+            double zspeed = Z1RunSpeed;
+            double zsafe = Z1SafePos;
+            var axisX = GTSCard.Instance.X1;
+            var axisY = GTSCard.Instance.Y1;
+            var axisZ = GTSCard.Instance.Z1;
+            int stepnum = 0;
+            while (true)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+                switch (stepnum)
+                {
+                    case 0:
+                        GTSCard.Instance.AxisPosMove(ref axisZ, zsafe, zspeed);
+                        stepnum = 1;
+                        break;
+                    case 1:
+                        if (GTSCard.Instance.AxisCheckDone(axisZ))
+                        {
+                            stepnum = 2;
+                        }
+                        break;
+                    case 2:
+                        GTSCard.Instance.AxisArcMove(X_Enc, Y_Enc, xCenter, yCenter, speed);
+                        stepnum = 3;
+                        break;
+                    case 3:
+                        if (GTSCard.Instance.AxisCheckDone(axisX) && GTSCard.Instance.AxisCheckDone(axisY))
+                        {
+                            return;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                System.Threading.Thread.Sleep(100);
+            }
+            
+        }
         void ExecuteGetPositionCommand(object obj)
         {
             switch (obj.ToString())
@@ -433,6 +534,14 @@ namespace CNCTestUI.ViewModels
             myParam.Y1JogSpeed = Y1JogSpeed;
             myParam.Z1JogSpeed = Z1JogSpeed;
             myParam.R1JogSpeed = R1JogSpeed;
+
+            myParam.InitPos.X = InitPos.X;
+            myParam.InitPos.Y = InitPos.Y;
+            myParam.InitPos.Z = InitPos.Z;
+            myParam.InitPos.R = InitPos.R;
+
+            myParam.Z1SafePos = Z1SafePos;
+            myParam.Z1CarvePos = Z1CarvePos;
 
             string jsonString = JsonConvert.SerializeObject(myParam, Formatting.Indented);
             File.WriteAllText(System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Param.json"), jsonString);
@@ -743,6 +852,17 @@ namespace CNCTestUI.ViewModels
             {
                 addMessage(ex.Message);
             }
+        }
+        private void ResetAction()
+        {
+            GTSCard.Instance.AxisStop(GTSCard.Instance.X1, 1);
+            GTSCard.Instance.AxisStop(GTSCard.Instance.Y1, 1);
+            GTSCard.Instance.AxisStop(GTSCard.Instance.Z1, 1);
+            GTSCard.Instance.AxisStop(GTSCard.Instance.R1, 1);
+            GTSCard.Instance.ServoOff(GTSCard.Instance.X1);
+            GTSCard.Instance.ServoOff(GTSCard.Instance.Y1);
+            GTSCard.Instance.ServoOff(GTSCard.Instance.Z1);
+            GTSCard.Instance.ServoOff(GTSCard.Instance.R1);
         }
         #endregion
     }
