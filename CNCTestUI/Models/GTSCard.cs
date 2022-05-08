@@ -373,13 +373,13 @@ namespace CNCTestUI.Models
             int option = fifo;
             gts.mc.GT_PtStart(_AxisParam.CardNo, 1 << (_AxisParam.AxisId - 1), option << (_AxisParam.AxisId - 1));//启动FIFO的PT运动
         }
-        public void AxisArcMove(double startx,double starty,double xCenter,double yCenter, double speed)
+        public void AxisArcMove(double startx,double starty,double xCenter,double yCenter,short circleDir, double speed)
         {
             gts.mc.TCrdPrm crdPrm;
 
             crdPrm.dimension = 2;                        // 建立三维的坐标系
-            crdPrm.synVelMax = 500;                      // 坐标系的最大合成速度是: 500 pulse/ms
-            crdPrm.synAccMax = 2;                        // 坐标系的最大合成加速度是: 2 pulse/ms^2
+            crdPrm.synVelMax = 1000;                      // 坐标系的最大合成速度是: 500 pulse/ms
+            crdPrm.synAccMax = 20;                        // 坐标系的最大合成加速度是: 2 pulse/ms^2
             crdPrm.evenTime = 0;                         // 坐标系的最小匀速时间为0
             crdPrm.profile1 = 1;                       // 规划器1对应到X轴                       
             crdPrm.profile2 = 2;                       // 规划器2对应到Y轴
@@ -408,13 +408,20 @@ namespace CNCTestUI.Models
                 1,					// 坐标系是坐标系1
                 (int)(startx / X1.Equiv), (int)(starty / Y1.Equiv),			// 该圆弧的终点坐标(0, 0)用户设置的起点坐标和终点坐标重合时，则表示将要进行一个整圆的运动
                 xCenter / X1.Equiv, yCenter / Y1.Equiv,			// 圆弧插补的圆心相对于起点位置的偏移量(-100000, 0)
-                0,					// 该圆弧是顺时针圆弧
+                circleDir,					// 该圆弧是顺时针圆弧
                 speed / X1.Equiv / 1000,					// 该插补段的目标速度：100pulse/ms
                 0.1,					// 该插补段的加速度：0.1pulse/ms^2
                 0,					// 终点速度为0
                 0);                 // 向坐标系1的FIFO0缓存区传递该直线插补数据
                                     // 启动坐标系1的FIFO0的插补运动
             sRtn = gts.mc.GT_CrdStart(0, 1, 0);
+        }
+        public bool AxisCheckCrdDone()
+        {
+            short run;
+            int seg;
+            gts.mc.GT_CrdStatus(0, 1, out run, out seg, 0);
+            return seg == 1 && run != 1;
         }
         public bool AxisCheckDone(AxisParm _AxisParam)
         {

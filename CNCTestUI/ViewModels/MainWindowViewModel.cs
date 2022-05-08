@@ -6,6 +6,7 @@ using Prism.Regions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -289,8 +290,13 @@ namespace CNCTestUI.ViewModels
                     {
                         source = new CancellationTokenSource();
                         CancellationToken token = source.Token;
+                        GTSCard.Instance.ServoOn(GTSCard.Instance.X1);
+                        GTSCard.Instance.ServoOn(GTSCard.Instance.Y1);
+                        GTSCard.Instance.ServoOn(GTSCard.Instance.Z1);
+                        GTSCard.Instance.ServoOn(GTSCard.Instance.R1);
                         IsAxisBusy = true;
-                        await Task.Run(() => ARCMotion(token, 100, 100), token).ContinueWith(t => IsAxisBusy = false);
+                        await Task.Delay(200);
+                        await Task.Run(() => ARCMotion(token, 150, 150, 1), token).ContinueWith(t => IsAxisBusy = false);
                     }
                     break;
                 case "1":
@@ -448,7 +454,7 @@ namespace CNCTestUI.ViewModels
                 System.Threading.Thread.Sleep(100);
             }
         }
-        private void ARCMotion(CancellationToken token,double xCenter,double yCenter)
+        private void ARCMotion(CancellationToken token,double xCenter, double yCenter, short circleDir)
         {
             double speed = X1RunSpeed;
             double zspeed = Z1RunSpeed;
@@ -457,6 +463,7 @@ namespace CNCTestUI.ViewModels
             var axisY = GTSCard.Instance.Y1;
             var axisZ = GTSCard.Instance.Z1;
             int stepnum = 0;
+            Stopwatch sw = new Stopwatch();
             while (true)
             {
                 if (token.IsCancellationRequested)
@@ -476,13 +483,21 @@ namespace CNCTestUI.ViewModels
                         }
                         break;
                     case 2:
-                        GTSCard.Instance.AxisArcMove(X_Enc, Y_Enc, xCenter, yCenter, speed);
+                        GTSCard.Instance.AxisArcMove(X_Enc, Y_Enc, xCenter, yCenter, circleDir, speed);
                         stepnum = 3;
                         break;
                     case 3:
-                        if (GTSCard.Instance.AxisCheckDone(axisX) && GTSCard.Instance.AxisCheckDone(axisY))
+                        if (GTSCard.Instance.AxisCheckCrdDone())
                         {
-                            return;
+                            stepnum = 4;
+                            sw.Restart();
+                        }
+                        break;
+                    case 4:
+                        if (sw.Elapsed.TotalMilliseconds > 100)
+                        {
+                            sw.Start();
+                            stepnum = 2;
                         }
                         break;
                     default:
