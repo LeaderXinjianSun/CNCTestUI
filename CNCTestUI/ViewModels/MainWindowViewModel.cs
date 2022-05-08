@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -203,6 +204,30 @@ namespace CNCTestUI.ViewModels
             get { return r1JogSpeed; }
             set { SetProperty(ref r1JogSpeed, value); }
         }
+        private ViPoint initPos;
+        public ViPoint InitPos
+        {
+            get { return initPos; }
+            set { SetProperty(ref initPos, value); }
+        }
+        private double z1SafePos;
+        public double Z1SafePos
+        {
+            get { return z1SafePos; }
+            set { SetProperty(ref z1SafePos, value); }
+        }
+        private double z1CarvePos;
+        public double Z1CarvePos
+        {
+            get { return z1CarvePos; }
+            set { SetProperty(ref z1CarvePos, value); }
+        }
+        private bool isAxisBusy = false;
+        public bool IsAxisBusy
+        {
+            get { return isAxisBusy; }
+            set { SetProperty(ref isAxisBusy, value); }
+        }
         #endregion
         #region 方法绑定
         private DelegateCommand<object> menuCommand;
@@ -239,7 +264,164 @@ namespace CNCTestUI.ViewModels
         private DelegateCommand saveParamCommand;
         public DelegateCommand SaveParamCommand =>
             saveParamCommand ?? (saveParamCommand = new DelegateCommand(ExecuteSaveParamCommand));
+        private DelegateCommand<object> getPositionCommand;
+        public DelegateCommand<object> GetPositionCommand =>
+            getPositionCommand ?? (getPositionCommand = new DelegateCommand<object>(ExecuteGetPositionCommand));
+        private DelegateCommand<object> goPositionCommand;
+        public DelegateCommand<object> GoPositionCommand =>
+            goPositionCommand ?? (goPositionCommand = new DelegateCommand<object>(ExecuteGoPositionCommand));
 
+        async void ExecuteGoPositionCommand(object obj)
+        {
+            CancellationTokenSource source = new CancellationTokenSource();
+            CancellationToken token = source.Token;
+            switch (obj.ToString())
+            {
+                case "0":
+                    if (MessageBox.Show($"确认运动到\"初始点\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        IsAxisBusy = true;
+                        await Task.Run(() => GoActionXYZR(token, InitPos), token).ContinueWith(t => IsAxisBusy = false);
+                    }
+                    break;
+                case "1":
+                    if (MessageBox.Show($"确认运动到\"Z轴安全位\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        IsAxisBusy = true;
+                        await Task.Run(() => GoAction(token, GTSCard.Instance.Z1, Z1SafePos, Z1JogSpeed), token).ContinueWith(t => IsAxisBusy = false);
+                    }
+                    break;
+                case "2":
+                    if (MessageBox.Show($"确认运动到\"Z轴切割位\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        IsAxisBusy = true;
+                        await Task.Run(() => GoAction(token, GTSCard.Instance.Z1, Z1CarvePos, Z1JogSpeed), token).ContinueWith(t => IsAxisBusy = false);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        private void GoAction(CancellationToken token, AxisParm axis, double Pos, double speed)
+        {
+            int stepnum = 0;
+            while (true)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+                switch (stepnum)
+                {
+                    case 0:
+                        GTSCard.Instance.AxisPosMove(ref axis, Pos, speed);
+                        stepnum = 1;
+                        break;
+                    case 1:
+                        if (GTSCard.Instance.AxisCheckDone(axis))
+                        {
+                            return;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                System.Threading.Thread.Sleep(100);
+            }
+        }
+        private void GoActionXYZR(CancellationToken token, ViPoint Pos)
+        {
+            AxisParm axisX, axisY, axisZ, axisR;
+            double zsafe;
+            double xspeed, yspeed, zspeed, rspeed;
+            axisX = GTSCard.Instance.X1;
+            axisY = GTSCard.Instance.Y1;
+            axisZ = GTSCard.Instance.Z1;
+            axisR = GTSCard.Instance.R1;
+            zsafe = Z1SafePos;
+            xspeed = X1JogSpeed;
+            yspeed = Y1JogSpeed;
+            zspeed = Z1JogSpeed;
+            rspeed = R1JogSpeed;
+
+            int stepnum = 0;
+            while (true)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+                switch (stepnum)
+                {
+                    case 0:
+                        GTSCard.Instance.AxisPosMove(ref axisZ, zsafe, zspeed);
+                        stepnum = 1;
+                        break;
+                    case 1:
+                        if (GTSCard.Instance.AxisCheckDone(axisZ))
+                        {
+                            stepnum = 2;
+                        }
+                        break;
+                    case 2:
+                        GTSCard.Instance.AxisPosMove(ref axisX, Pos.X, xspeed);
+                        GTSCard.Instance.AxisPosMove(ref axisY, Pos.Y, yspeed);
+                        GTSCard.Instance.AxisPosMove(ref axisR, Pos.R, rspeed);
+                        stepnum = 3;
+                        break;
+                    case 3:
+                        if (GTSCard.Instance.AxisCheckDone(axisX) && GTSCard.Instance.AxisCheckDone(axisY) && GTSCard.Instance.AxisCheckDone(axisR))
+                        {
+                            stepnum = 4;
+                        }
+                        break;
+                    case 4:
+                        GTSCard.Instance.AxisPosMove(ref axisZ, Pos.Z, zspeed);
+                        stepnum = 5;
+                        break;
+                    case 5:
+                        if (GTSCard.Instance.AxisCheckDone(axisZ))
+                        {
+                            return;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                System.Threading.Thread.Sleep(100);
+            }
+        }
+        void ExecuteGetPositionCommand(object obj)
+        {
+            switch (obj.ToString())
+            {
+                case "0":
+                    if (MessageBox.Show($"确认设置\"初始点\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        InitPos.X = myParam.InitPos.X = GTSCard.Instance.GetEnc(GTSCard.Instance.X1);
+                        InitPos.Y = myParam.InitPos.Y = GTSCard.Instance.GetEnc(GTSCard.Instance.Y1);
+                        InitPos.Z = myParam.InitPos.Z = GTSCard.Instance.GetEnc(GTSCard.Instance.Z1);
+                        InitPos.R = myParam.InitPos.R = GTSCard.Instance.GetEnc(GTSCard.Instance.R1);
+                    }
+                    break;
+                case "1":
+                    if (MessageBox.Show($"确认设置\"Z轴安全位\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        Z1SafePos = myParam.Z1SafePos = GTSCard.Instance.GetEnc(GTSCard.Instance.Z1);
+                    }
+                    break;
+                case "2":
+                    if (MessageBox.Show($"确认设置\"Z轴切割位\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        Z1CarvePos = myParam.Z1CarvePos = GTSCard.Instance.GetEnc(GTSCard.Instance.Z1);
+                    }
+                    break;
+                default:
+                    break;
+            }
+            string jsonString = JsonConvert.SerializeObject(myParam, Formatting.Indented);
+            File.WriteAllText(System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Param.json"), jsonString);
+        }
         void ExecuteSaveParamCommand()
         {
             myParam.X1RunSpeed = X1RunSpeed;
@@ -438,6 +620,18 @@ namespace CNCTestUI.ViewModels
             axisParm = GTSCard.Instance.X1;
             GTSCard.Instance.Init();
             LoadParm();
+            if (myParam.InitPos == null)
+            {
+                myParam.InitPos = new MPoint();
+            }
+            InitPos = new ViPoint() { 
+                X = myParam.InitPos.X,
+                Y = myParam.InitPos.Y,
+                Z = myParam.InitPos.Z,
+                R = myParam.InitPos.R
+            };
+            Z1SafePos = myParam.Z1SafePos;
+            Z1CarvePos = myParam.Z1CarvePos;
             if (ServoModbus.Instance.Connect(serialCOM))
             {
                 var a = ServoModbus.Instance.ReadInovance(1) * GTSCard.Instance.X1.Equiv;
@@ -561,6 +755,33 @@ namespace CNCTestUI.ViewModels
         {
             get { return process; }
             set { SetProperty(ref process, value); }
+        }
+    }
+    public class ViPoint : BindableBase
+    {
+        private double x;
+        public double X
+        {
+            get { return x; }
+            set { SetProperty(ref x, value); }
+        }
+        private double y;
+        public double Y
+        {
+            get { return y; }
+            set { SetProperty(ref y, value); }
+        }
+        private double z;
+        public double Z
+        {
+            get { return z; }
+            set { SetProperty(ref z, value); }
+        }
+        private double r;
+        public double R
+        {
+            get { return r; }
+            set { SetProperty(ref r, value); }
         }
     }
 }

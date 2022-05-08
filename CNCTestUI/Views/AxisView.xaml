@@ -238,6 +238,16 @@
                     <Setter Property="Width" Value="30" />
                     <Setter Property="Margin" Value="1,0" />
                 </Style>
+                <Style
+                    x:Key="GoButton"
+                    BasedOn="{StaticResource ParamButtonBase}"
+                    TargetType="Button">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsAxisBusy}" Value="true">
+                            <Setter Property="IsEnabled" Value="False" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
             </WrapPanel.Resources>
             <GroupBox Header="Jog运动">
                 <GroupBox.Resources>
@@ -486,6 +496,105 @@
                         <TextBlock Width="60" Text="R1轴速度" />
                         <TextBox Text="{Binding R1JogSpeed, StringFormat={}{0:F1}, FallbackValue=99.9}" />
                         <TextBlock Width="auto" Text="°/s" />
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="坐标">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel>
+                            <TextBlock Width="auto" />
+                            <TextBlock Width="50" Text="初始点" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock
+                                Width="auto"
+                                HorizontalAlignment="Center"
+                                Text="X" />
+                            <TextBox
+                                Width="50"
+                                Margin="0"
+                                Text="{Binding InitPos.X, StringFormat={}{0:F3}, FallbackValue=99.999}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock
+                                Width="auto"
+                                HorizontalAlignment="Center"
+                                Text="Y" />
+                            <TextBox
+                                Width="50"
+                                Margin="0"
+                                Text="{Binding InitPos.Y, StringFormat={}{0:F3}, FallbackValue=99.999}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock
+                                Width="auto"
+                                HorizontalAlignment="Center"
+                                Text="Z" />
+                            <TextBox
+                                Width="50"
+                                Margin="0"
+                                Text="{Binding InitPos.Z, StringFormat={}{0:F3}, FallbackValue=99.99}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock
+                                Width="auto"
+                                HorizontalAlignment="Center"
+                                Text="R" />
+                            <TextBox
+                                Width="50"
+                                Margin="0"
+                                Text="{Binding InitPos.R, StringFormat={}{0:F3}, FallbackValue=99.99}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Width="auto" />
+                            <Button
+                                Command="{Binding GetPositionCommand}"
+                                CommandParameter="0"
+                                Content="Get"
+                                Style="{StaticResource ParamButtonBase}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Width="auto" />
+                            <Button
+                                Command="{Binding GoPositionCommand}"
+                                CommandParameter="0"
+                                Content="Go"
+                                Style="{StaticResource GoButton}" />
+                        </StackPanel>
+
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="Z轴">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Width="70" Text="Z轴安全位" />
+                        <TextBox Text="{Binding Z1SafePos, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <Button
+                            Command="{Binding GetPositionCommand}"
+                            CommandParameter="1"
+                            Content="Get"
+                            Style="{StaticResource ParamButtonBase}" />
+                        <Button
+                            Command="{Binding GoPositionCommand}"
+                            CommandParameter="1"
+                            Content="Go"
+                            Style="{StaticResource GoButton}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Width="70" Text="Z轴切割位" />
+                        <TextBox Text="{Binding Z1CarvePos, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <Button
+                            Command="{Binding GetPositionCommand}"
+                            CommandParameter="2"
+                            Content="Get"
+                            Style="{StaticResource ParamButtonBase}" />
+                        <Button
+                            Command="{Binding GoPositionCommand}"
+                            CommandParameter="2"
+                            Content="Go"
+                            Style="{StaticResource GoButton}" />
                     </StackPanel>
                 </StackPanel>
             </GroupBox>

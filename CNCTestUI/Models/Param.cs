@@ -24,5 +24,16 @@ namespace CNCTestUI.Models
         public double Y1RunSpeed;
         public double Z1RunSpeed;
         public double R1RunSpeed;
+
+        public MPoint InitPos;
+        public double Z1SafePos;
+        public double Z1CarvePos;
+    }
+    public class MPoint
+    {
+        public double X;
+        public double Y;
+        public double Z;
+        public double R;
     }
 }
