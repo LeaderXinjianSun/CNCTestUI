@@ -90,7 +90,7 @@
                             Command="{Binding GoPositionCommand}"
                             CommandParameter="3"
                             Content="对刀"
-                            Style="{StaticResource OperateButtonBase}" />
+                            Style="{StaticResource BusyButton}" />
                     </WrapPanel>
                 </GroupBox>
                 <GroupBox Grid.Row="1" Header="信息">
