@@ -483,21 +483,32 @@ namespace CNCTestUI.ViewModels
                         }
                         break;
                     case 2:
-                        GTSCard.Instance.AxisArcMove(X_Enc, Y_Enc, xCenter, yCenter, circleDir, speed);
+                        GTSCard.Instance.AxisPosMove(ref axisX, myParam.InitPos.X, speed);
+                        GTSCard.Instance.AxisPosMove(ref axisY, myParam.InitPos.Y, speed);
                         stepnum = 3;
                         break;
                     case 3:
-                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        if (GTSCard.Instance.AxisCheckDone(axisX) && GTSCard.Instance.AxisCheckDone(axisY))
                         {
                             stepnum = 4;
-                            sw.Restart();
                         }
                         break;
                     case 4:
+                        GTSCard.Instance.AxisArcMove(X_Enc, Y_Enc, xCenter, yCenter, circleDir, speed);
+                        stepnum = 5;
+                        break;
+                    case 5:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 6;
+                            sw.Restart();
+                        }
+                        break;
+                    case 6:
                         if (sw.Elapsed.TotalMilliseconds > 100)
                         {
                             sw.Start();
-                            stepnum = 2;
+                            stepnum = 4;
                         }
                         break;
                     default:
