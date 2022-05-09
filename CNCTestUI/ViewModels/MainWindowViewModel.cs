@@ -212,6 +212,12 @@ namespace CNCTestUI.ViewModels
             get { return initPos; }
             set { SetProperty(ref initPos, value); }
         }
+        private ViPoint toolPoint;
+        public ViPoint ToolPoint
+        {
+            get { return toolPoint; }
+            set { SetProperty(ref toolPoint, value); }
+        }
         private double z1SafePos;
         public double Z1SafePos
         {
@@ -229,6 +235,18 @@ namespace CNCTestUI.ViewModels
         {
             get { return isAxisBusy; }
             set { SetProperty(ref isAxisBusy, value); }
+        }
+        private double x_Tool;
+        public double X_Tool
+        {
+            get { return x_Tool; }
+            set { SetProperty(ref x_Tool, value); }
+        }
+        private double y_Tool;
+        public double Y_Tool
+        {
+            get { return y_Tool; }
+            set { SetProperty(ref y_Tool, value); }
         }
         #endregion
         #region 方法绑定
@@ -296,7 +314,7 @@ namespace CNCTestUI.ViewModels
                         GTSCard.Instance.ServoOn(GTSCard.Instance.R1);
                         IsAxisBusy = true;
                         await Task.Delay(200);
-                        await Task.Run(() => ARCMotion(token, 150, 150, 1), token).ContinueWith(t => IsAxisBusy = false);
+                        await Task.Run(() => ARCMotion(token, 50, 50, 1), token).ContinueWith(t => IsAxisBusy = false);
                     }
                     break;
                 case "1":
@@ -484,12 +502,22 @@ namespace CNCTestUI.ViewModels
                         }
                         break;
                     case 2:
-                        GTSCard.Instance.AxisLnXYMove(myParam.InitPos.X,myParam.InitPos.Y, speed);
+                        GTSCard.Instance.AxisPosMove(ref axisX, myParam.InitPos.X, speed);
+                        GTSCard.Instance.AxisPosMove(ref axisY, myParam.InitPos.Y, speed);
                         stepnum = 3;
                         break;
                     case 3:
-                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        if (GTSCard.Instance.AxisCheckDone(axisX) && GTSCard.Instance.AxisCheckDone(axisY))
                         {
+                            var r = GTSCard.Instance.SetCrd(myParam.ToolPoint.X, myParam.ToolPoint.Y);
+                            if (!r)
+                            {
+                                addMessage("坐标系初始化:失败");
+                            }
+                            else
+                            {
+                                addMessage("初始化坐标系");
+                            }
                             stepnum = 4;
                         }
                         break;
@@ -504,7 +532,7 @@ namespace CNCTestUI.ViewModels
                         }
                         break;
                     case 6:
-                        GTSCard.Instance.AxisArcMove(X_Enc, Y_Enc, xCenter, yCenter, circleDir, speed);
+                        GTSCard.Instance.AxisArcMove(0, 0, xCenter, yCenter, circleDir, speed);
                         stepnum = 7;
                         break;
                     case 7:
@@ -553,6 +581,21 @@ namespace CNCTestUI.ViewModels
                         Z1CarvePos = myParam.Z1CarvePos = GTSCard.Instance.GetEnc(GTSCard.Instance.Z1);
                     }
                     break;
+                case "3":
+                    if (MessageBox.Show($"确认设置\"对刀\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        ToolPoint.X = myParam.ToolPoint.X = GTSCard.Instance.GetEnc(GTSCard.Instance.X1);
+                        ToolPoint.Y = myParam.ToolPoint.Y = GTSCard.Instance.GetEnc(GTSCard.Instance.Y1);
+                        ToolPoint.Z = myParam.ToolPoint.Z = GTSCard.Instance.GetEnc(GTSCard.Instance.Z1);
+                        ToolPoint.R = myParam.ToolPoint.R = GTSCard.Instance.GetEnc(GTSCard.Instance.R1);
+
+                        var r = GTSCard.Instance.SetCrd(myParam.ToolPoint.X, myParam.ToolPoint.Y);
+                        if (!r)
+                        {
+                            MessageBox.Show("对刀失败", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                    break;
                 default:
                     break;
             }
@@ -575,6 +618,11 @@ namespace CNCTestUI.ViewModels
             myParam.InitPos.Y = InitPos.Y;
             myParam.InitPos.Z = InitPos.Z;
             myParam.InitPos.R = InitPos.R;
+
+            myParam.ToolPoint.X = ToolPoint.X;
+            myParam.ToolPoint.Y = ToolPoint.Y;
+            myParam.ToolPoint.Z = ToolPoint.Z;
+            myParam.ToolPoint.R = ToolPoint.R;
 
             myParam.Z1SafePos = Z1SafePos;
             myParam.Z1CarvePos = Z1CarvePos;
@@ -775,6 +823,17 @@ namespace CNCTestUI.ViewModels
                 Z = myParam.InitPos.Z,
                 R = myParam.InitPos.R
             };
+            if (myParam.ToolPoint == null)
+            {
+                myParam.ToolPoint = new MPoint();
+            }
+            InitPos = new ViPoint()
+            {
+                X = myParam.ToolPoint.X,
+                Y = myParam.ToolPoint.Y,
+                Z = myParam.ToolPoint.Z,
+                R = myParam.ToolPoint.R
+            };
             Z1SafePos = myParam.Z1SafePos;
             Z1CarvePos = myParam.Z1CarvePos;
             if (ServoModbus.Instance.Connect(serialCOM))
@@ -794,6 +853,8 @@ namespace CNCTestUI.ViewModels
                 a = ServoModbus.Instance.ReadInovance(4) * GTSCard.Instance.R1.Equiv;
                 GTSCard.Instance.SigAxisPosSet(GTSCard.Instance.R1, a - myParam.R1Abs);
                 GTSCard.Instance.SigAxisEncSet(GTSCard.Instance.R1, a - myParam.R1Abs);
+
+                
             }
             else
             {
@@ -827,6 +888,9 @@ namespace CNCTestUI.ViewModels
                         Y_Enc = GTSCard.Instance.GetEnc(GTSCard.Instance.Y1);
                         Z_Enc = GTSCard.Instance.GetEnc(GTSCard.Instance.Z1);
                         R_Enc = GTSCard.Instance.GetEnc(GTSCard.Instance.R1);
+
+                        X_Tool = X_Enc - myParam.ToolPoint.X;
+                        Y_Tool = Y_Enc - myParam.ToolPoint.Y;
                         if (AxisViewVisibility == "Visible")
                         {
                             AxisStatus axisStatus = GTSCard.Instance.GetAxisStatus(axisParm);

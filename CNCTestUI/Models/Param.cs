@@ -28,6 +28,8 @@ namespace CNCTestUI.Models
         public MPoint InitPos;
         public double Z1SafePos;
         public double Z1CarvePos;
+
+        public MPoint ToolPoint;
     }
     public class MPoint
     {

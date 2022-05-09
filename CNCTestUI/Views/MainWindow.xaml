@@ -78,12 +78,19 @@
                         </WrapPanel.Resources>
                         <Button
                             Command="{Binding OperateButtonCommand}"
-                            CommandParameter="0" Style="{StaticResource BusyButton}"
-                            Content="开始" />
+                            CommandParameter="0"
+                            Content="开始"
+                            Style="{StaticResource BusyButton}" />
                         <Button
                             Command="{Binding OperateButtonCommand}"
                             CommandParameter="1"
-                            Content="停止" Style="{StaticResource OperateButtonBase}"/>
+                            Content="停止"
+                            Style="{StaticResource OperateButtonBase}" />
+                        <Button
+                            Command="{Binding GoPositionCommand}"
+                            CommandParameter="3"
+                            Content="对刀"
+                            Style="{StaticResource OperateButtonBase}" />
                     </WrapPanel>
                 </GroupBox>
                 <GroupBox Grid.Row="1" Header="信息">
@@ -131,6 +138,8 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Orientation="Horizontal">
+                    <TextBlock Text="{Binding X_Tool, StringFormat='X1:{0:F3} ', FallbackValue=X1:0.000&#160;}" />
+                    <TextBlock Text="{Binding Y_Tool, StringFormat='Y1:{0:F3} ', FallbackValue=Y1:0.000&#160;}" />
                     <TextBlock Text="{Binding X_Enc, StringFormat='X:{0:F3} ', FallbackValue=X:0.000&#160;}" />
                     <TextBlock Text="{Binding Y_Enc, StringFormat='Y:{0:F3} ', FallbackValue=Y:0.000&#160;}" />
                     <TextBlock Text="{Binding Z_Enc, StringFormat='Z:{0:F3} ', FallbackValue=Z:0.000&#160;}" />

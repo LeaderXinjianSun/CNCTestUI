@@ -564,6 +564,35 @@
                         </StackPanel>
 
                     </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Width="50" Text="对刀点" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding ToolPoint.X, StringFormat={}{0:F3}, FallbackValue=99.999}" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding ToolPoint.Y, StringFormat={}{0:F3}, FallbackValue=99.999}" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding ToolPoint.Z, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding ToolPoint.R, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <Button
+                            Command="{Binding GetPositionCommand}"
+                            CommandParameter="3"
+                            Content="Get"
+                            Style="{StaticResource ParamButtonBase}" />
+                        <Button
+                            Command="{Binding GoPositionCommand}"
+                            CommandParameter="3"
+                            Content="Go"
+                            Style="{StaticResource GoButton}" />
+                    </StackPanel>
                 </StackPanel>
             </GroupBox>
             <GroupBox Header="Z轴">
@@ -598,6 +627,7 @@
                     </StackPanel>
                 </StackPanel>
             </GroupBox>
+
         </WrapPanel>
         <Button
             Grid.Row="1"
