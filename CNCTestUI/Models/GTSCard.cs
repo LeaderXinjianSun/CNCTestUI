@@ -402,12 +402,18 @@ namespace CNCTestUI.Models
             int option = fifo;
             gts.mc.GT_PtStart(_AxisParam.CardNo, 1 << (_AxisParam.AxisId - 1), option << (_AxisParam.AxisId - 1));//启动FIFO的PT运动
         }
-        
+        public void AxisLnXYMove(double targetx,double targety,double speed)
+        {
+            gts.mc.GT_CrdClear(0, 1, 0);
+            gts.mc.GT_LnXY(0, 1, (int)(targetx / X1.Equiv), (int)(targety / Y1.Equiv), speed / X1.Equiv / 1000, 10, 0, 0);
+            gts.mc.GT_CrdStart(0, 1, 0);
+        }
         public void AxisArcMove(double startx, double starty, double xCenter, double yCenter, short circleDir, double speed)
         {
+            
             // 即将把数据存入坐标系1的FIFO0中，所以要首先清除此缓存区中的数据
             gts.mc.GT_CrdClear(0, 1, 0);
-            gts.mc.GT_BufMove(0, 1, 4, 0, speed / R1.Equiv / 1000, 10, 1, 0);//旋转轴回转
+
             gts.mc.GT_BufGear(0, 1, 4, 360000, 0);
             // 向缓存区写入第一段插补数据，该段数据是以圆心描述方法描述了一个整圆
             gts.mc.GT_ArcXYC(0,
@@ -419,15 +425,15 @@ namespace CNCTestUI.Models
                 10,					// 该插补段的加速度：0.1pulse/ms^2
                 0,					// 终点速度为0
                 0);                 // 向坐标系1的FIFO0缓存区传递该直线插补数据
-                                    // 启动坐标系1的FIFO0的插补运动
-            sRtn = gts.mc.GT_CrdStart(0, 1, 0);
+                                                                                      // 启动坐标系1的FIFO0的插补运动
+            gts.mc.GT_CrdStart(0, 1, 0);
         }
         public bool AxisCheckCrdDone()
         {
             short run;
             int seg;
             gts.mc.GT_CrdStatus(0, 1, out run, out seg, 0);
-            return seg == 1 && run != 1;
+            return run != 1;
         }
         public bool AxisCheckDone(AxisParm _AxisParam)
         {

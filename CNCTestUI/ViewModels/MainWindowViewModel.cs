@@ -462,6 +462,7 @@ namespace CNCTestUI.ViewModels
             var axisX = GTSCard.Instance.X1;
             var axisY = GTSCard.Instance.Y1;
             var axisZ = GTSCard.Instance.Z1;
+            var axisR = GTSCard.Instance.R1;
             int stepnum = 0;
             Stopwatch sw = new Stopwatch();
             while (true)
@@ -483,28 +484,37 @@ namespace CNCTestUI.ViewModels
                         }
                         break;
                     case 2:
-                        GTSCard.Instance.AxisPosMove(ref axisX, myParam.InitPos.X, speed);
-                        GTSCard.Instance.AxisPosMove(ref axisY, myParam.InitPos.Y, speed);
+                        GTSCard.Instance.AxisLnXYMove(myParam.InitPos.X,myParam.InitPos.Y, speed);
                         stepnum = 3;
                         break;
                     case 3:
-                        if (GTSCard.Instance.AxisCheckDone(axisX) && GTSCard.Instance.AxisCheckDone(axisY))
+                        if (GTSCard.Instance.AxisCheckCrdDone())
                         {
                             stepnum = 4;
                         }
                         break;
                     case 4:
-                        GTSCard.Instance.AxisArcMove(X_Enc, Y_Enc, xCenter, yCenter, circleDir, speed);
+                        GTSCard.Instance.AxisPosMove(ref axisR, 0, speed);
                         stepnum = 5;
                         break;
                     case 5:
-                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        if (GTSCard.Instance.AxisCheckDone(axisR))
                         {
                             stepnum = 6;
-                            sw.Restart();
                         }
                         break;
                     case 6:
+                        GTSCard.Instance.AxisArcMove(X_Enc, Y_Enc, xCenter, yCenter, circleDir, speed);
+                        stepnum = 7;
+                        break;
+                    case 7:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 8;
+                            sw.Restart();
+                        }
+                        break;
+                    case 8:
                         if (sw.Elapsed.TotalMilliseconds > 100)
                         {
                             sw.Start();
