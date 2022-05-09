@@ -577,11 +577,11 @@
                         <TextBox
                             Width="50"
                             Margin="0"
-                            Text="{Binding ToolPoint.Z, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                            Text="{Binding ToolPoint.Z, StringFormat={}{0:F3}, FallbackValue=99.99}" />
                         <TextBox
                             Width="50"
                             Margin="0"
-                            Text="{Binding ToolPoint.R, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                            Text="{Binding ToolPoint.R, StringFormat={}{0:F3}, FallbackValue=99.99}" />
                         <Button
                             Command="{Binding GetPositionCommand}"
                             CommandParameter="3"

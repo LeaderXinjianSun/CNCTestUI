@@ -502,8 +502,8 @@ namespace CNCTestUI.ViewModels
                         }
                         break;
                     case 2:
-                        GTSCard.Instance.AxisPosMove(ref axisX, myParam.InitPos.X, speed);
-                        GTSCard.Instance.AxisPosMove(ref axisY, myParam.InitPos.Y, speed);
+                        GTSCard.Instance.AxisPosMove(ref axisX, myParam.ToolPoint.X, speed);
+                        GTSCard.Instance.AxisPosMove(ref axisY, myParam.ToolPoint.Y, speed);
                         stepnum = 3;
                         break;
                     case 3:
@@ -827,7 +827,7 @@ namespace CNCTestUI.ViewModels
             {
                 myParam.ToolPoint = new MPoint();
             }
-            InitPos = new ViPoint()
+            ToolPoint = new ViPoint()
             {
                 X = myParam.ToolPoint.X,
                 Y = myParam.ToolPoint.Y,
