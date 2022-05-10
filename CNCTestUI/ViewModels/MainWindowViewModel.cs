@@ -329,6 +329,7 @@ namespace CNCTestUI.ViewModels
                         else
                         {
                             MessageBox.Show("未加载G代码", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            IsAxisBusy = false;
                         }
                     }
                     break;
@@ -609,8 +610,8 @@ namespace CNCTestUI.ViewModels
                             string gcode = gCodeItem1.GCode.Replace(" ", "");
                             int xstart = gcode.IndexOf('X');
                             int ystart = gcode.IndexOf('Y');
-                            targetX = int.Parse(gcode.Substring(xstart + 1,ystart - xstart - 1));
-                            targetY = int.Parse(gcode.Substring(ystart + 1));
+                            targetX = double.Parse(gcode.Substring(xstart + 1,ystart - xstart - 1));
+                            targetY = double.Parse(gcode.Substring(ystart + 1));
                             GTSCard.Instance.AxisLnXYMove(targetX, targetY, myParam.X1RunSpeed);
                             stepnum = 103;
                         }
