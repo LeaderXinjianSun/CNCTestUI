@@ -319,7 +319,8 @@ namespace CNCTestUI.ViewModels
                             Queue<GCodeItem1> gcodeQueue = new Queue<GCodeItem1>();
                             for (int i = 0; i < GCodeItems.Count; i++)
                             {
-                                gcodeQueue.Enqueue(new GCodeItem1() { 
+                                gcodeQueue.Enqueue(new GCodeItem1()
+                                {
                                     Id = GCodeItems[i].Id,
                                     GCode = GCodeItems[i].GCode
                                 });
@@ -493,9 +494,9 @@ namespace CNCTestUI.ViewModels
             int stepnum = 0;
             Stopwatch sw = new Stopwatch();
             GCodeItem1 gCodeItem1 = new GCodeItem1();
-            double targetX = 0,targetY = 0, targetI = 0, targetJ = 0;
+            double targetX = 0, targetY = 0, targetI = 0, targetJ = 0;
             double origX = 0, origY = 0;
-            double targetA = 0;double finalA = 0;
+            double targetA = 0; double finalA = 0;
             double offsetX = 0, offsetY = 0;
             while (true)
             {
@@ -575,7 +576,7 @@ namespace CNCTestUI.ViewModels
                         }
                         break;
                     case 7:
-                        switch (gCodeItem1.GCode.Substring(0,2))
+                        switch (gCodeItem1.GCode.Substring(0, 2))
                         {
                             case "G0":
                                 stepnum = 100;
@@ -610,7 +611,7 @@ namespace CNCTestUI.ViewModels
                             string gcode = gCodeItem1.GCode.Replace(" ", "");
                             int xstart = gcode.IndexOf('X');
                             int ystart = gcode.IndexOf('Y');
-                            targetX = double.Parse(gcode.Substring(xstart + 1,ystart - xstart - 1));
+                            targetX = double.Parse(gcode.Substring(xstart + 1, ystart - xstart - 1));
                             targetY = double.Parse(gcode.Substring(ystart + 1));
                             GTSCard.Instance.AxisLnXYMove(targetX, targetY, myParam.X1RunSpeed);
                             stepnum = 103;
@@ -698,8 +699,8 @@ namespace CNCTestUI.ViewModels
                             double cirCenterX = origX + targetI;
                             double cirCenterY = origY + targetJ;
 
-                            targetA = getAngleBetweenPoints(cirCenterX, cirCenterY, origX, origY) -180;
-                            finalA = getAngleBetweenPoints(cirCenterX, cirCenterY, targetX, targetY) -180;
+                            targetA = getAngleBetweenPoints(cirCenterX, cirCenterY, origX, origY) - 180;
+                            finalA = getAngleBetweenPoints(cirCenterX, cirCenterY, targetX, targetY) - 180;
                             GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.R1, targetA, myParam.R1RunSpeed);
                             stepnum = 303;
                         }
@@ -718,7 +719,17 @@ namespace CNCTestUI.ViewModels
                     case 305:
                         if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
                         {
-                            GTSCard.Instance.AxisArcMove(targetX, targetY,targetI,targetJ, finalA - targetA,0, myParam.X1RunSpeed);
+                            double speed = 0;
+                            double radius = Math.Sqrt(Math.Pow(targetI, 2) + Math.Pow(targetJ, 2));
+                            if (radius > 100)
+                            {
+                                speed = myParam.X1RunSpeed;
+                            }
+                            else
+                            {
+                                speed = myParam.X1RunSpeed / 100 * radius;
+                            }
+                            GTSCard.Instance.AxisArcMove(targetX, targetY, targetI, targetJ, finalA - targetA, 0, speed);
                             stepnum = 306;
                         }
                         break;
@@ -776,7 +787,17 @@ namespace CNCTestUI.ViewModels
                     case 405:
                         if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
                         {
-                            GTSCard.Instance.AxisArcMove(targetX, targetY, targetI, targetJ, finalA - targetA, 1, myParam.X1RunSpeed);
+                            double speed = 0;
+                            double radius = Math.Sqrt(Math.Pow(targetI, 2) + Math.Pow(targetJ, 2));
+                            if (radius > 100)
+                            {
+                                speed = myParam.X1RunSpeed;
+                            }
+                            else
+                            {
+                                speed = myParam.X1RunSpeed / 100 * radius;
+                            }
+                            GTSCard.Instance.AxisArcMove(targetX, targetY, targetI, targetJ, finalA - targetA, 1, speed);
                             stepnum = 406;
                         }
                         break;
@@ -815,7 +836,7 @@ namespace CNCTestUI.ViewModels
                 }
                 System.Threading.Thread.Sleep(100);
             }
-            
+
         }
         void ExecuteGetPositionCommand(object obj)
         {
@@ -1042,7 +1063,7 @@ namespace CNCTestUI.ViewModels
                                 }
                                 if (state >= 0)
                                 {
-                                    if (!line.Contains("Z") && line.Substring(0,1) == "G")
+                                    if (!line.Contains("Z") && line.Substring(0, 1) == "G")
                                     {
                                         GCodeItems.Add(new GCodeItem()
                                         {
@@ -1078,7 +1099,8 @@ namespace CNCTestUI.ViewModels
             {
                 myParam.InitPos = new MPoint();
             }
-            InitPos = new ViPoint() { 
+            InitPos = new ViPoint()
+            {
                 X = myParam.InitPos.X,
                 Y = myParam.InitPos.Y,
                 Z = myParam.InitPos.Z,
@@ -1115,13 +1137,13 @@ namespace CNCTestUI.ViewModels
                 GTSCard.Instance.SigAxisPosSet(GTSCard.Instance.R1, a - myParam.R1Abs);
                 GTSCard.Instance.SigAxisEncSet(GTSCard.Instance.R1, a - myParam.R1Abs);
 
-                
+
             }
             else
             {
                 addMessage("串口打开失败");
             }
-            
+
 
             UIRun();
         }
@@ -1225,7 +1247,7 @@ namespace CNCTestUI.ViewModels
             GTSCard.Instance.ServoOff(GTSCard.Instance.Z1);
             GTSCard.Instance.ServoOff(GTSCard.Instance.R1);
         }
-        private double getAngleBetweenPoints(double x_orig,double y_orig,double x_landmark,double y_landmark)
+        private double getAngleBetweenPoints(double x_orig, double y_orig, double x_landmark, double y_landmark)
         {
             double deltaY = y_landmark - y_orig;
             double deltaX = x_landmark - x_orig;
@@ -1252,7 +1274,7 @@ namespace CNCTestUI.ViewModels
             set { SetProperty(ref process, value); }
         }
     }
-    public class GCodeItem1 
+    public class GCodeItem1
     {
         public int Id { get; set; }
         public string GCode { get; set; }
