@@ -314,7 +314,22 @@ namespace CNCTestUI.ViewModels
                         GTSCard.Instance.ServoOn(GTSCard.Instance.R1);
                         IsAxisBusy = true;
                         await Task.Delay(200);
-                        await Task.Run(() => ARCMotion(token, 50, 50, 1), token).ContinueWith(t => IsAxisBusy = false);
+                        if (GCodeItems.Count > 0)
+                        {
+                            Queue<GCodeItem1> gcodeQueue = new Queue<GCodeItem1>();
+                            for (int i = 0; i < GCodeItems.Count; i++)
+                            {
+                                gcodeQueue.Enqueue(new GCodeItem1() { 
+                                    Id = GCodeItems[i].Id,
+                                    GCode = GCodeItems[i].GCode
+                                });
+                            }
+                            await Task.Run(() => ARCMotion(token, gcodeQueue), token).ContinueWith(t => IsAxisBusy = false);
+                        }
+                        else
+                        {
+                            MessageBox.Show("未加载G代码", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                     break;
                 case "1":
@@ -472,17 +487,15 @@ namespace CNCTestUI.ViewModels
                 System.Threading.Thread.Sleep(100);
             }
         }
-        private void ARCMotion(CancellationToken token,double xCenter, double yCenter, short circleDir)
+        private void ARCMotion(CancellationToken token, Queue<GCodeItem1> gCodeItem1s)
         {
-            double speed = X1RunSpeed;
-            double zspeed = Z1RunSpeed;
-            double zsafe = Z1SafePos;
-            var axisX = GTSCard.Instance.X1;
-            var axisY = GTSCard.Instance.Y1;
-            var axisZ = GTSCard.Instance.Z1;
-            var axisR = GTSCard.Instance.R1;
             int stepnum = 0;
             Stopwatch sw = new Stopwatch();
+            GCodeItem1 gCodeItem1 = new GCodeItem1();
+            double targetX = 0,targetY = 0, targetI = 0, targetJ = 0;
+            double origX = 0, origY = 0;
+            double targetA = 0;double finalA = 0;
+            double offsetX = 0, offsetY = 0;
             while (true)
             {
                 if (token.IsCancellationRequested)
@@ -492,22 +505,22 @@ namespace CNCTestUI.ViewModels
                 switch (stepnum)
                 {
                     case 0:
-                        GTSCard.Instance.AxisPosMove(ref axisZ, zsafe, zspeed);
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.Z1SafePos, myParam.Z1RunSpeed);
                         stepnum = 1;
                         break;
                     case 1:
-                        if (GTSCard.Instance.AxisCheckDone(axisZ))
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
                         {
                             stepnum = 2;
                         }
                         break;
                     case 2:
-                        GTSCard.Instance.AxisPosMove(ref axisX, myParam.ToolPoint.X, speed);
-                        GTSCard.Instance.AxisPosMove(ref axisY, myParam.ToolPoint.Y, speed);
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.X1, myParam.ToolPoint.X, myParam.X1RunSpeed);
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Y1, myParam.ToolPoint.Y, myParam.X1RunSpeed);
                         stepnum = 3;
                         break;
                     case 3:
-                        if (GTSCard.Instance.AxisCheckDone(axisX) && GTSCard.Instance.AxisCheckDone(axisY))
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.X1) && GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Y1))
                         {
                             var r = GTSCard.Instance.SetCrd(myParam.ToolPoint.X, myParam.ToolPoint.Y);
                             if (!r)
@@ -522,31 +535,278 @@ namespace CNCTestUI.ViewModels
                         }
                         break;
                     case 4:
-                        GTSCard.Instance.AxisPosMove(ref axisR, 0, speed);
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.R1, 0, myParam.R1RunSpeed);
                         stepnum = 5;
                         break;
                     case 5:
-                        if (GTSCard.Instance.AxisCheckDone(axisR))
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.R1))
                         {
                             stepnum = 6;
                         }
                         break;
+
+
+
                     case 6:
-                        GTSCard.Instance.AxisArcMove(0, 0, xCenter, yCenter, circleDir, speed);
-                        stepnum = 7;
-                        break;
-                    case 7:
-                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        if (gCodeItem1s.Count == 0)
                         {
-                            stepnum = 8;
-                            sw.Restart();
+                            stepnum = 500;
+                            //处理完了
+                        }
+                        else
+                        {
+                            gCodeItem1 = gCodeItem1s.Dequeue();
+                            //显示当前执行行
+                            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() =>
+                            {
+                                var curr = GCodeItems.FirstOrDefault(t => t.Process == true);
+                                if (curr != null)
+                                {
+                                    curr.Process = false;
+                                }
+                                var next = GCodeItems.FirstOrDefault(t => t.Id == gCodeItem1.Id);
+                                if (next != null)
+                                {
+                                    next.Process = true;
+                                }
+                            }));
+                            stepnum = 7;
                         }
                         break;
-                    case 8:
-                        if (sw.Elapsed.TotalMilliseconds > 100)
+                    case 7:
+                        switch (gCodeItem1.GCode.Substring(0,2))
                         {
-                            sw.Start();
-                            stepnum = 4;
+                            case "G0":
+                                stepnum = 100;
+                                break;
+                            case "G1":
+                                stepnum = 200;
+                                break;
+                            case "G2":
+                                stepnum = 300;
+                                break;
+                            case "G3":
+                                stepnum = 400;
+                                break;
+                            default://其他指令？
+                                stepnum = 6;
+                                break;
+                        }
+                        break;
+                    case 100:
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.Z1SafePos, myParam.Z1RunSpeed);
+                        stepnum = 101;
+                        break;
+                    case 101:
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
+                        {
+                            stepnum = 102;
+                        }
+                        break;
+                    case 102:
+                        {
+                            //分离出目标位置的X和Y坐标
+                            string gcode = gCodeItem1.GCode.Replace(" ", "");
+                            int xstart = gcode.IndexOf('X');
+                            int ystart = gcode.IndexOf('Y');
+                            targetX = int.Parse(gcode.Substring(xstart + 1,ystart - xstart - 1));
+                            targetY = int.Parse(gcode.Substring(ystart + 1));
+                            GTSCard.Instance.AxisLnXYMove(targetX, targetY, myParam.X1RunSpeed);
+                            stepnum = 103;
+                        }
+                        break;
+                    case 103:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 6;
+                        }
+                        break;
+                    case 200:
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.Z1CarvePos + 3, myParam.Z1RunSpeed);
+                        stepnum = 201;
+                        break;
+                    case 201:
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
+                        {
+                            stepnum = 202;
+                        }
+                        break;
+                    case 202:
+                        {
+                            //分离出目标位置的X和Y坐标
+                            string gcode = gCodeItem1.GCode.Replace(" ", "");
+                            int xstart = gcode.IndexOf('X');
+                            int ystart = gcode.IndexOf('Y');
+                            targetX = double.Parse(gcode.Substring(xstart + 1, ystart - xstart - 1));
+                            targetY = double.Parse(gcode.Substring(ystart + 1));
+                            origX = GTSCard.Instance.GetEnc(GTSCard.Instance.X1) - myParam.ToolPoint.X;
+                            origY = GTSCard.Instance.GetEnc(GTSCard.Instance.Y1) - myParam.ToolPoint.Y;
+                            targetA = getAngleBetweenPoints(origX, origY, targetX, targetY) - 90;
+                            GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.R1, targetA, myParam.R1RunSpeed);
+                            stepnum = 203;
+                        }
+                        break;
+                    case 203:
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.R1))
+                        {
+                            stepnum = 204;
+                        }
+                        break;
+                    case 204:
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.Z1CarvePos, myParam.Z1RunSpeed);
+                        stepnum = 205;
+                        break;
+                    case 205:
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
+                        {
+                            GTSCard.Instance.AxisLnXYMove(targetX, targetY, myParam.X1RunSpeed);
+                            stepnum = 206;
+                        }
+                        break;
+                    case 206:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 6;
+                        }
+                        break;
+
+                    case 300:
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.Z1CarvePos + 3, myParam.Z1RunSpeed);
+                        stepnum = 301;
+                        break;
+                    case 301:
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
+                        {
+                            stepnum = 302;
+                        }
+                        break;
+                    case 302:
+                        {
+                            //分离出目标位置的X和Y坐标
+                            string gcode = gCodeItem1.GCode.Replace(" ", "");
+                            int xstart = gcode.IndexOf('X');
+                            int ystart = gcode.IndexOf('Y');
+                            int istart = gcode.IndexOf('I');
+                            int jstart = gcode.IndexOf('J');
+                            targetX = double.Parse(gcode.Substring(xstart + 1, ystart - xstart - 1));
+                            targetY = double.Parse(gcode.Substring(ystart + 1, istart - ystart - 1));
+                            origX = GTSCard.Instance.GetEnc(GTSCard.Instance.X1) - myParam.ToolPoint.X;
+                            origY = GTSCard.Instance.GetEnc(GTSCard.Instance.Y1) - myParam.ToolPoint.Y;
+                            targetI = double.Parse(gcode.Substring(istart + 1, jstart - istart - 1));
+                            targetJ = double.Parse(gcode.Substring(jstart + 1));
+                            double cirCenterX = origX + targetI;
+                            double cirCenterY = origY + targetJ;
+
+                            targetA = getAngleBetweenPoints(cirCenterX, cirCenterY, origX, origY) -180;
+                            finalA = getAngleBetweenPoints(cirCenterX, cirCenterY, targetX, targetY) -180;
+                            GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.R1, targetA, myParam.R1RunSpeed);
+                            stepnum = 303;
+                        }
+                        break;
+
+                    case 303:
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.R1))
+                        {
+                            stepnum = 304;
+                        }
+                        break;
+                    case 304:
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.Z1CarvePos, myParam.Z1RunSpeed);
+                        stepnum = 305;
+                        break;
+                    case 305:
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
+                        {
+                            GTSCard.Instance.AxisArcMove(targetX, targetY,targetI,targetJ, finalA - targetA,0, myParam.X1RunSpeed);
+                            stepnum = 306;
+                        }
+                        break;
+                    case 306:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 6;
+                        }
+                        break;
+
+                    case 400:
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.Z1CarvePos + 3, myParam.Z1RunSpeed);
+                        stepnum = 401;
+                        break;
+                    case 401:
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
+                        {
+                            stepnum = 402;
+                        }
+                        break;
+                    case 402:
+                        {
+                            //分离出目标位置的X和Y坐标
+                            string gcode = gCodeItem1.GCode.Replace(" ", "");
+                            int xstart = gcode.IndexOf('X');
+                            int ystart = gcode.IndexOf('Y');
+                            int istart = gcode.IndexOf('I');
+                            int jstart = gcode.IndexOf('J');
+                            targetX = double.Parse(gcode.Substring(xstart + 1, ystart - xstart - 1));
+                            targetY = double.Parse(gcode.Substring(ystart + 1, istart - ystart - 1));
+                            origX = GTSCard.Instance.GetEnc(GTSCard.Instance.X1) - myParam.ToolPoint.X;
+                            origY = GTSCard.Instance.GetEnc(GTSCard.Instance.Y1) - myParam.ToolPoint.Y;
+                            targetI = double.Parse(gcode.Substring(istart + 1, jstart - istart - 1));
+                            targetJ = double.Parse(gcode.Substring(jstart + 1));
+                            double cirCenterX = origX + targetI;
+                            double cirCenterY = origY + targetJ;
+
+                            targetA = getAngleBetweenPoints(cirCenterX, cirCenterY, origX, origY);
+                            finalA = getAngleBetweenPoints(cirCenterX, cirCenterY, targetX, targetY);
+                            GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.R1, targetA, myParam.R1RunSpeed);
+                            stepnum = 403;
+                        }
+                        break;
+
+                    case 403:
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.R1))
+                        {
+                            stepnum = 404;
+                        }
+                        break;
+                    case 404:
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.Z1CarvePos, myParam.Z1RunSpeed);
+                        stepnum = 405;
+                        break;
+                    case 405:
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
+                        {
+                            GTSCard.Instance.AxisArcMove(targetX, targetY, targetI, targetJ, finalA - targetA, 1, myParam.X1RunSpeed);
+                            stepnum = 406;
+                        }
+                        break;
+                    case 406:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 6;
+                        }
+                        break;
+
+
+                    case 500:
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.Z1SafePos, myParam.Z1RunSpeed);
+                        stepnum = 501;
+                        break;
+                    case 501:
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
+                        {
+                            stepnum = 502;
+                        }
+                        break;
+                    case 502:
+                        {
+                            GTSCard.Instance.AxisLnXYMove(0, 0, myParam.X1RunSpeed);
+                            stepnum = 503;
+                        }
+                        break;
+                    case 503:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            return;
                         }
                         break;
                     default:
@@ -964,6 +1224,20 @@ namespace CNCTestUI.ViewModels
             GTSCard.Instance.ServoOff(GTSCard.Instance.Z1);
             GTSCard.Instance.ServoOff(GTSCard.Instance.R1);
         }
+        private double getAngleBetweenPoints(double x_orig,double y_orig,double x_landmark,double y_landmark)
+        {
+            double deltaY = y_landmark - y_orig;
+            double deltaX = x_landmark - x_orig;
+            return angle_trunc(Math.Atan2(deltaY, deltaX)) / Math.PI * 180;
+        }
+        private double angle_trunc(double a)
+        {
+            while (a < 0)
+            {
+                a += Math.PI * 2;
+            }
+            return a;
+        }
         #endregion
     }
     public class GCodeItem : BindableBase
@@ -976,6 +1250,11 @@ namespace CNCTestUI.ViewModels
             get { return process; }
             set { SetProperty(ref process, value); }
         }
+    }
+    public class GCodeItem1 
+    {
+        public int Id { get; set; }
+        public string GCode { get; set; }
     }
     public class ViPoint : BindableBase
     {

@@ -418,17 +418,17 @@ namespace CNCTestUI.Models
             gts.mc.GT_LnXY(0, 1, (int)(targetx / X1.Equiv), (int)(targety / Y1.Equiv), speed / X1.Equiv / 1000, 10, 0, 0);
             gts.mc.GT_CrdStart(0, 1, 0);
         }
-        public void AxisArcMove(double startx, double starty, double xCenter, double yCenter, short circleDir, double speed)
+        public void AxisArcMove(double targetx, double targety, double xCenter, double yCenter,double angle, short circleDir, double speed)
         {
             
             // 即将把数据存入坐标系1的FIFO0中，所以要首先清除此缓存区中的数据
             gts.mc.GT_CrdClear(0, 1, 0);
 
-            gts.mc.GT_BufGear(0, 1, 4, 360000, 0);
+            gts.mc.GT_BufGear(0, 1, 4, (int)(angle/R1.Equiv), 0);
             // 向缓存区写入第一段插补数据，该段数据是以圆心描述方法描述了一个整圆
             gts.mc.GT_ArcXYC(0,
                 1,					// 坐标系是坐标系1
-                (int)(startx / X1.Equiv), (int)(starty / Y1.Equiv),			// 该圆弧的终点坐标(0, 0)用户设置的起点坐标和终点坐标重合时，则表示将要进行一个整圆的运动
+                (int)(targetx / X1.Equiv), (int)(targety / Y1.Equiv),			// 该圆弧的终点坐标(0, 0)用户设置的起点坐标和终点坐标重合时，则表示将要进行一个整圆的运动
                 xCenter / X1.Equiv, yCenter / Y1.Equiv,			// 圆弧插补的圆心相对于起点位置的偏移量(-100000, 0)
                 circleDir,					// 该圆弧是顺时针圆弧
                 speed / X1.Equiv / 1000,					// 该插补段的目标速度：100pulse/ms
