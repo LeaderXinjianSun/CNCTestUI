@@ -412,6 +412,46 @@ namespace CNCTestUI.Models
             }
             return true;
         }
+        /// <summary>
+        /// 设置坐标系
+        /// </summary>
+        /// <param name="offsetx"></param>
+        /// <param name="offsety"></param>
+        /// <param name="offsetz"></param>
+        /// <returns></returns>
+        public bool SetCrd(double offsetx, double offsety, double offsetz)
+        {
+            gts.mc.TCrdPrm crdPrm;
+
+            crdPrm.dimension = 2;                        // 建立二维的坐标系
+            crdPrm.synVelMax = 1000;                      // 坐标系的最大合成速度是: 500 pulse/ms
+            crdPrm.synAccMax = 20;                        // 坐标系的最大合成加速度是: 2 pulse/ms^2
+            crdPrm.evenTime = 0;                         // 坐标系的最小匀速时间为0
+            crdPrm.profile1 = 1;                       // 规划器1对应到X轴                       
+            crdPrm.profile2 = 2;                       // 规划器2对应到Y轴
+            crdPrm.profile3 = 3;
+            crdPrm.profile4 = 0;
+            crdPrm.profile5 = 0;
+            crdPrm.profile6 = 0;
+            crdPrm.profile7 = 0;
+            crdPrm.profile8 = 0;
+            crdPrm.setOriginFlag = 1;                    // 需要设置加工坐标系原点位置
+            crdPrm.originPos1 = (int)(offsetx / X1.Equiv);                     // 加工坐标系原点位置在(0,0,0)，即与机床坐标系原点重合
+            crdPrm.originPos2 = (int)(offsety / Y1.Equiv);
+            crdPrm.originPos3 = (int)(offsetz / Y1.Equiv);
+            crdPrm.originPos4 = 0;
+            crdPrm.originPos5 = 0;
+            crdPrm.originPos6 = 0;
+            crdPrm.originPos7 = 0;
+            crdPrm.originPos8 = 0;
+
+            SRtn = gts.mc.GT_SetCrdPrm(0, 1, ref crdPrm);
+            if (SRtn != 0)
+            {
+                return false;
+            }
+            return true;
+        }
         public void AxisLnXYMove(double targetx,double targety,double speed)
         {
             gts.mc.GT_CrdClear(0, 1, 0);

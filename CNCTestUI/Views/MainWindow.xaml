@@ -33,10 +33,7 @@
             <RowDefinition Height="30" />
         </Grid.RowDefinitions>
         <Menu VerticalAlignment="Center">
-            <MenuItem
-                Command="{Binding MenuCommand}"
-                CommandParameter="0"
-                Header="文件" />
+
             <MenuItem
                 Command="{Binding MenuCommand}"
                 CommandParameter="1"
@@ -48,7 +45,7 @@
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
             <Grid>
-                <local:ProcessListView Visibility="{Binding ProcessListViewVisibility}" />
+                
                 <local:AxisView Visibility="{Binding AxisViewVisibility}" />
             </Grid>
             <Grid Grid.Column="1">
@@ -86,11 +83,7 @@
                             CommandParameter="1"
                             Content="停止"
                             Style="{StaticResource OperateButtonBase}" />
-                        <Button
-                            Command="{Binding GoPositionCommand}"
-                            CommandParameter="3"
-                            Content="对刀"
-                            Style="{StaticResource BusyButton}" />
+
                     </WrapPanel>
                 </GroupBox>
                 <GroupBox Grid.Row="1" Header="信息">

@@ -73,13 +73,13 @@ namespace CNCTestUI.ViewModels
             get { return messageStr; }
             set { SetProperty(ref messageStr, value); }
         }
-        private string processListViewVisibility = "Visible";
+        private string processListViewVisibility = "Collapsed";
         public string ProcessListViewVisibility
         {
             get { return processListViewVisibility; }
             set { SetProperty(ref processListViewVisibility, value); }
         }
-        private string axisViewVisibility = "Collapsed";
+        private string axisViewVisibility = "Visible";
         public string AxisViewVisibility
         {
             get { return axisViewVisibility; }
@@ -313,25 +313,25 @@ namespace CNCTestUI.ViewModels
                         GTSCard.Instance.ServoOn(GTSCard.Instance.Z1);
                         GTSCard.Instance.ServoOn(GTSCard.Instance.R1);
                         IsAxisBusy = true;
-                        await Task.Delay(200);
-                        if (GCodeItems.Count > 0)
-                        {
-                            Queue<GCodeItem1> gcodeQueue = new Queue<GCodeItem1>();
-                            for (int i = 0; i < GCodeItems.Count; i++)
-                            {
-                                gcodeQueue.Enqueue(new GCodeItem1()
-                                {
-                                    Id = GCodeItems[i].Id,
-                                    GCode = GCodeItems[i].GCode
-                                });
-                            }
-                            await Task.Run(() => ARCMotion(token, gcodeQueue), token).ContinueWith(t => IsAxisBusy = false);
-                        }
-                        else
-                        {
-                            MessageBox.Show("未加载G代码", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            IsAxisBusy = false;
-                        }
+                        //await Task.Delay(200);
+                        //if (GCodeItems.Count > 0)
+                        //{
+                        //    Queue<GCodeItem1> gcodeQueue = new Queue<GCodeItem1>();
+                        //    for (int i = 0; i < GCodeItems.Count; i++)
+                        //    {
+                        //        gcodeQueue.Enqueue(new GCodeItem1()
+                        //        {
+                        //            Id = GCodeItems[i].Id,
+                        //            GCode = GCodeItems[i].GCode
+                        //        });
+                        //    }
+                        //    await Task.Run(() => ARCMotion(token, gcodeQueue), token).ContinueWith(t => IsAxisBusy = false);
+                        //}
+                        //else
+                        //{
+                        //    MessageBox.Show("未加载G代码", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        //    IsAxisBusy = false;
+                        //}
                     }
                     break;
                 case "1":
@@ -1032,51 +1032,7 @@ namespace CNCTestUI.ViewModels
         {
             switch (obj.ToString())
             {
-                case "0":
-                    ProcessListViewVisibility = "Visible";
-                    AxisViewVisibility = "Collapsed";
-                    OpenFileDialog ofd = new OpenFileDialog();
-                    ofd.Filter = "Txt文件(*.txt)|*.txt|所有文件|*.*";
-                    if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                    {
-                        GCodeItems.Clear();
-                        string[] lines = System.IO.File.ReadAllLines(ofd.FileName);
-                        int id = 0;
-                        int state = -1;
-                        foreach (string line in lines)
-                        {
-                            if (line.Length > 2)
-                            {
-                                if (line.Length > 8 && line.Substring(0, 8) == "(* SHAPE")
-                                {
-                                    state = 0;
-                                    continue;
-                                }
-                                else if (line.Contains("G1") && state == 0)
-                                {
-                                    state = 1;
-                                }
-                                else if (line.Contains("F150") && state == 1)
-                                {
-                                    state = -1;
-                                    continue;
-                                }
-                                if (state >= 0)
-                                {
-                                    if (!line.Contains("Z") && line.Substring(0, 1) == "G")
-                                    {
-                                        GCodeItems.Add(new GCodeItem()
-                                        {
-                                            Id = id++,
-                                            GCode = line,
-                                            Process = false
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    break;
+                
                 case "1":
                     ProcessListViewVisibility = "Collapsed";
                     AxisViewVisibility = "Visible";
@@ -1092,9 +1048,11 @@ namespace CNCTestUI.ViewModels
             GTSCard.Instance.StateUpdateEvent += Instance_StateUpdateEvent;
             GTSCard.Instance.MessagePrintEvent += Instance_MessagePrintEvent;
             MotionJogSelectedIndex = 0;
-            axisParm = GTSCard.Instance.X1;
             GTSCard.Instance.Init();
             LoadParm();
+            axisParm = GTSCard.Instance.X1;
+            GTSCard.Instance.SetDo(0, 0);
+            GTSCard.Instance.SetDo(1, 0);
             if (myParam.InitPos == null)
             {
                 myParam.InitPos = new MPoint();
