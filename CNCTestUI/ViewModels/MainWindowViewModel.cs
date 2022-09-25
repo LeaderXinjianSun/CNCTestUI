@@ -545,13 +545,13 @@ namespace CNCTestUI.ViewModels
                     case 5:
                         if (GTSCard.Instance.AxisCheckCrdDone())
                         {
-                            return;
+                            stepnum = 4;
                         }
                         break;
                     default:
                         break;
                 }
-                System.Threading.Thread.Sleep(100);
+                System.Threading.Thread.Sleep(10);
             }
         }
         private void ARCMotion(CancellationToken token, Queue<GCodeItem1> gCodeItem1s)
@@ -1118,6 +1118,8 @@ namespace CNCTestUI.ViewModels
             axisParm = GTSCard.Instance.X1;
             GTSCard.Instance.SetDo(0, 0);
             GTSCard.Instance.SetDo(1, 0);
+            GTSCard.Instance.ServoOn(GTSCard.Instance.Z1);
+            System.Threading.Thread.Sleep(1000);
             if (myParam.InitPos == null)
             {
                 myParam.InitPos = new MPoint();
