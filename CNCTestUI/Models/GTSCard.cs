@@ -458,6 +458,15 @@ namespace CNCTestUI.Models
             gts.mc.GT_LnXY(0, 1, (int)(targetx / X1.Equiv), (int)(targety / Y1.Equiv), speed / X1.Equiv / 1000, 10, 0, 0);
             gts.mc.GT_CrdStart(0, 1, 0);
         }
+        public void AxisLnXYZMove(double[,] targets, double speed)
+        {
+            gts.mc.GT_CrdClear(0, 1, 0);
+            for (int i = 0; i < targets.GetUpperBound(0) + 1; i++)
+            {
+                gts.mc.GT_LnXYZ(0, 1, (int)(targets[i, 0] / X1.Equiv), (int)(targets[i, 1] / Y1.Equiv), (int)(targets[i, 2] / Z1.Equiv), speed / X1.Equiv / 1000, 2, 0, 0);
+            }
+            gts.mc.GT_CrdStart(0, 1, 0);
+        }
         public void AxisArcMove(double targetx, double targety, double xCenter, double yCenter,double angle, short circleDir, double speed)
         {
             

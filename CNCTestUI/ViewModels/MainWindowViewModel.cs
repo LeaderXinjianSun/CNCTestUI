@@ -1,4 +1,5 @@
 ﻿using CNCTestUI.Models;
+using CsvHelper;
 using Newtonsoft.Json;
 using Prism.Commands;
 using Prism.Mvvm;
@@ -7,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -313,25 +315,22 @@ namespace CNCTestUI.ViewModels
                         GTSCard.Instance.ServoOn(GTSCard.Instance.Z1);
                         GTSCard.Instance.ServoOn(GTSCard.Instance.R1);
                         IsAxisBusy = true;
-                        //await Task.Delay(200);
-                        //if (GCodeItems.Count > 0)
-                        //{
-                        //    Queue<GCodeItem1> gcodeQueue = new Queue<GCodeItem1>();
-                        //    for (int i = 0; i < GCodeItems.Count; i++)
-                        //    {
-                        //        gcodeQueue.Enqueue(new GCodeItem1()
-                        //        {
-                        //            Id = GCodeItems[i].Id,
-                        //            GCode = GCodeItems[i].GCode
-                        //        });
-                        //    }
-                        //    await Task.Run(() => ARCMotion(token, gcodeQueue), token).ContinueWith(t => IsAxisBusy = false);
-                        //}
-                        //else
-                        //{
-                        //    MessageBox.Show("未加载G代码", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        //    IsAxisBusy = false;
-                        //}
+                        await Task.Delay(200);
+                        List<M1Point> m1Points;
+                        using (var reader = new StreamReader(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Points.csv")))
+                        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                        {
+                            m1Points = csv.GetRecords<M1Point>().ToList();
+                        }
+                        if (m1Points.Count > 0)
+                        {
+                            await Task.Run(() => ALineMotion(token, m1Points), token).ContinueWith(t => IsAxisBusy = false);
+                        }
+                        else
+                        {
+                            MessageBox.Show("未加载到点", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            IsAxisBusy = false;
+                        }
                     }
                     break;
                 case "1":
@@ -479,6 +478,72 @@ namespace CNCTestUI.ViewModels
                         break;
                     case 5:
                         if (GTSCard.Instance.AxisCheckDone(axisZ))
+                        {
+                            return;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                System.Threading.Thread.Sleep(100);
+            }
+        }
+        private void ALineMotion(CancellationToken token, List<M1Point> m1Points)
+        {
+            int stepnum = 0;
+            Stopwatch sw = new Stopwatch();
+            while (true)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+                switch (stepnum)
+                {
+                    //case 0:
+                    //    GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.Z1SafePos, myParam.Z1RunSpeed);
+                    //    stepnum = 1;
+                    //    break;
+                    //case 1:
+                    //    if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
+                    //    {
+                    //        stepnum = 2;
+                    //    }
+                    //    break;
+                    case 0:
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.X1, myParam.ToolPoint.X, myParam.X1RunSpeed);
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Y1, myParam.ToolPoint.Y, myParam.X1RunSpeed);
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.ToolPoint.Z, myParam.Z1RunSpeed);
+                        stepnum = 3;
+                        break;
+                    case 3:
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.X1) && GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Y1) && GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
+                        {
+                            var r = GTSCard.Instance.SetCrd(myParam.ToolPoint.X, myParam.ToolPoint.Y, myParam.ToolPoint.Z);
+                            if (!r)
+                            {
+                                addMessage("坐标系初始化:失败");
+                            }
+                            else
+                            {
+                                addMessage("初始化坐标系");
+                            }
+                            stepnum = 4;
+                        }
+                        break;
+                    case 4:
+                        double[,] ps = new double[m1Points.Count,3];
+                        for (int i = 0; i < m1Points.Count; i++)
+                        {
+                            ps[i, 0] = m1Points[i].X;
+                            ps[i, 1] = m1Points[i].Y;
+                            ps[i, 2] = m1Points[i].Z;
+                        }
+                        GTSCard.Instance.AxisLnXYZMove(ps, myParam.X1RunSpeed);
+                        stepnum = 5;
+                        break;
+                    case 5:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
                         {
                             return;
                         }
@@ -1032,7 +1097,7 @@ namespace CNCTestUI.ViewModels
         {
             switch (obj.ToString())
             {
-                
+
                 case "1":
                     ProcessListViewVisibility = "Collapsed";
                     AxisViewVisibility = "Visible";
@@ -1263,5 +1328,11 @@ namespace CNCTestUI.ViewModels
             get { return r; }
             set { SetProperty(ref r, value); }
         }
+    }
+    class M1Point
+    {
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double Z { get; set; }
     }
 }
