@@ -538,6 +538,7 @@ namespace CNCTestUI.ViewModels
                     case 5:
                         if (GTSCard.Instance.AxisCheckCrdDone())
                         {
+                            addMessage(DateTime.Now.ToString("HH:mm:ss:fff"));
                             stepnum = 4;
                         }
                         break;
@@ -1179,6 +1180,7 @@ namespace CNCTestUI.ViewModels
         #region 功能函数
         private async void UIRun()
         {
+            bool _xAlarm = false, _yAlarm = false, _zAlarm = false;
             while (true)
             {
                 try
@@ -1202,6 +1204,40 @@ namespace CNCTestUI.ViewModels
                             NLimitState = axisStatus.FlagNeglimit;
                             AlarmState = axisStatus.FlagAlm;
                         }
+                        var xAlarm = GTSCard.Instance.GetAxisAlarm(GTSCard.Instance.X1);
+                        var yAlarm = GTSCard.Instance.GetAxisAlarm(GTSCard.Instance.Y1);
+                        var zAlarm = GTSCard.Instance.GetAxisAlarm(GTSCard.Instance.Z1);
+                        if (_xAlarm != xAlarm || _yAlarm != yAlarm || _zAlarm != zAlarm)
+                        {
+                            if (xAlarm || yAlarm || zAlarm)
+                            {
+                                if (source != null)
+                                {
+                                    source.Cancel();
+                                }
+                                GTSCard.Instance.AxisStop(GTSCard.Instance.X1, 1);
+                                GTSCard.Instance.AxisStop(GTSCard.Instance.Y1, 1);
+                                GTSCard.Instance.AxisStop(GTSCard.Instance.Z1, 1);
+                                GTSCard.Instance.AxisStop(GTSCard.Instance.R1, 1);
+                                IsAxisBusy = false;
+                            }
+                            if (xAlarm)
+                            {
+                                addMessage("X轴报警");
+                            }
+                            if (yAlarm)
+                            {
+                                addMessage("Y轴报警");
+                            }
+                            if (zAlarm)
+                            {
+                                addMessage("Z轴报警");
+                            }
+                            _xAlarm = xAlarm;
+                            _yAlarm = yAlarm;
+                            _zAlarm = zAlarm;
+                        }
+
                     }
                 }
                 catch { }

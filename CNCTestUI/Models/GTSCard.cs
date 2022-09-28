@@ -466,13 +466,13 @@ namespace CNCTestUI.Models
                 switch (targets[i].Type)
                 {
                     case 0://普通定位
-                        gts.mc.GT_LnXYZ(0, 1, (int)(targets[0].X / X1.Equiv), (int)(targets[0].Y / Y1.Equiv), (int)(targets[0].Z / Z1.Equiv), targets[0].Speed / X1.Equiv / 1000, 2, 0, 0);
+                        gts.mc.GT_LnXYZ(0, 1, (int)(targets[i].X / X1.Equiv), (int)(targets[i].Y / Y1.Equiv), (int)(targets[i].Z / Z1.Equiv), targets[i].Speed / X1.Equiv / 1000, 2, 0, 0);
                         break;
                     case 1://精确定位
-                        gts.mc.GT_LnXYZG0(0, 1, (int)(targets[0].X / X1.Equiv), (int)(targets[0].Y / Y1.Equiv), (int)(targets[0].Z / Z1.Equiv), targets[0].Speed / X1.Equiv / 1000, 2, 0);
+                        gts.mc.GT_LnXYZG0(0, 1, (int)(targets[i].X / X1.Equiv), (int)(targets[i].Y / Y1.Equiv), (int)(targets[i].Z / Z1.Equiv), targets[i].Speed / X1.Equiv / 1000, 2, 0);
                         break;
                     case 2://延时
-                        gts.mc.GT_BufDelay(0, 1, (ushort)targets[0].X, 0);
+                        gts.mc.GT_BufDelay(0, 1, (ushort)targets[i].X, 0);
                         break;
                     default:
                         break;
