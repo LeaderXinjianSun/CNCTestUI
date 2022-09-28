@@ -532,14 +532,7 @@ namespace CNCTestUI.ViewModels
                         }
                         break;
                     case 4:
-                        double[,] ps = new double[m1Points.Count,3];
-                        for (int i = 0; i < m1Points.Count; i++)
-                        {
-                            ps[i, 0] = m1Points[i].X;
-                            ps[i, 1] = m1Points[i].Y;
-                            ps[i, 2] = m1Points[i].Z;
-                        }
-                        GTSCard.Instance.AxisLnXYZMove(ps, myParam.X1RunSpeed);
+                        GTSCard.Instance.AxisLnXYZMove(m1Points);
                         stepnum = 5;
                         break;
                     case 5:
@@ -1331,10 +1324,5 @@ namespace CNCTestUI.ViewModels
             set { SetProperty(ref r, value); }
         }
     }
-    class M1Point
-    {
-        public double X { get; set; }
-        public double Y { get; set; }
-        public double Z { get; set; }
-    }
+
 }

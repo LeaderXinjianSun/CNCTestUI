@@ -38,4 +38,12 @@ namespace CNCTestUI.Models
         public double Z;
         public double R;
     }
+    public class M1Point
+    {
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double Z { get; set; }
+        public double Speed { get; set; }
+        public ushort Type { get; set; }
+    }
 }

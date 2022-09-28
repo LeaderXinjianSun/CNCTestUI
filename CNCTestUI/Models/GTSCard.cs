@@ -458,12 +458,25 @@ namespace CNCTestUI.Models
             gts.mc.GT_LnXY(0, 1, (int)(targetx / X1.Equiv), (int)(targety / Y1.Equiv), speed / X1.Equiv / 1000, 10, 0, 0);
             gts.mc.GT_CrdStart(0, 1, 0);
         }
-        public void AxisLnXYZMove(double[,] targets, double speed)
+        public void AxisLnXYZMove(List<M1Point> targets)
         {
             gts.mc.GT_CrdClear(0, 1, 0);
-            for (int i = 0; i < targets.GetUpperBound(0) + 1; i++)
+            for (int i = 0; i < targets.Count; i++)
             {
-                gts.mc.GT_LnXYZ(0, 1, (int)(targets[i, 0] / X1.Equiv), (int)(targets[i, 1] / Y1.Equiv), (int)(targets[i, 2] / Z1.Equiv), speed / X1.Equiv / 1000, 2, 0, 0);
+                switch (targets[i].Type)
+                {
+                    case 0://普通定位
+                        gts.mc.GT_LnXYZ(0, 1, (int)(targets[0].X / X1.Equiv), (int)(targets[0].Y / Y1.Equiv), (int)(targets[0].Z / Z1.Equiv), targets[0].Speed / X1.Equiv / 1000, 2, 0, 0);
+                        break;
+                    case 1://精确定位
+                        gts.mc.GT_LnXYZG0(0, 1, (int)(targets[0].X / X1.Equiv), (int)(targets[0].Y / Y1.Equiv), (int)(targets[0].Z / Z1.Equiv), targets[0].Speed / X1.Equiv / 1000, 2, 0);
+                        break;
+                    case 2://延时
+                        gts.mc.GT_BufDelay(0, 1, (ushort)targets[0].X, 0);
+                        break;
+                    default:
+                        break;
+                }
             }
             gts.mc.GT_CrdStart(0, 1, 0);
         }
