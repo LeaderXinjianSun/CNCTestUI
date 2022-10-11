@@ -134,8 +134,10 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Orientation="Horizontal">
+                    <TextBlock Text="工具:"></TextBlock>
                     <TextBlock Text="{Binding X_Tool, StringFormat='X1:{0:F3} ', FallbackValue=X1:0.000&#160;}" />
                     <TextBlock Text="{Binding Y_Tool, StringFormat='Y1:{0:F3} ', FallbackValue=Y1:0.000&#160;}" />
+                    <TextBlock Text="实际:"></TextBlock>
                     <TextBlock Text="{Binding X_Enc, StringFormat='X:{0:F3} ', FallbackValue=X:0.000&#160;}" />
                     <TextBlock Text="{Binding Y_Enc, StringFormat='Y:{0:F3} ', FallbackValue=Y:0.000&#160;}" />
                     <TextBlock Text="{Binding Z_Enc, StringFormat='Z:{0:F3} ', FallbackValue=Z:0.000&#160;}" />

@@ -651,12 +651,6 @@ namespace CNCTestUI.ViewModels
                 switch (stepnum)
                 {
                     case 0:
-                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.X1, myParam.ToolPoint.X, myParam.X1RunSpeed);
-                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Y1, myParam.ToolPoint.Y, myParam.X1RunSpeed);
-                        stepnum = 3;
-                        break;
-                    case 3:
-                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.X1) && GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Y1))
                         {
                             var r = GTSCard.Instance.SetCrd(myParam.ToolPoint.X, myParam.ToolPoint.Y);
                             if (!r)
@@ -675,7 +669,7 @@ namespace CNCTestUI.ViewModels
                             List<MPoint> targets = new List<MPoint>();
                             targets.Add(myParam.FlyGrabPoint1);
                             targets.Add(myParam.FlyGrabPoint2);
-                            GTSCard.Instance.AxisLnXYMove(targets, 2000);
+                            GTSCard.Instance.AxisLnXYMove(targets, myParam.X1RunSpeed);
                             int[] Buf1 = new int[10];
                             Buf1[0] = (int)((myParam.FlyGrabPoint2.X - myParam.FlyGrabPoint1.X) / GTSCard.Instance.X1.Equiv);
                             GTSCard.Instance.AxisCompare(Buf1);
@@ -692,14 +686,15 @@ namespace CNCTestUI.ViewModels
                         {
                             List<MPoint> targets = new List<MPoint>();
                             targets.Add(myParam.PastePoint1);
-                            GTSCard.Instance.AxisLnXYMove(targets, 2000);
+                            GTSCard.Instance.AxisLnXYMove(targets, myParam.X1RunSpeed);
                             stepnum = 7;
                         }
                         break;
                     case 7:
                         if (GTSCard.Instance.AxisCheckCrdDone())
                         {
-                            return;
+                            stepnum = 4;
+                            //return;
                         }
                         break;
                 }
