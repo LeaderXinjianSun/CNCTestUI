@@ -415,7 +415,7 @@
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Style="{StaticResource ParamTextBlock}" Text="X轴" />
-                        <TextBox Text="{Binding X1Abs, StringFormat={}{0:F3}, FallbackValue=99.999}" />
+                        <TextBox Text="{Binding X1Abs, StringFormat={}{0:F2}, FallbackValue=99.99}" />
                         <Button
                             Command="{Binding GetAbsCommand}"
                             CommandParameter="0"
@@ -424,7 +424,7 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Style="{StaticResource ParamTextBlock}" Text="Y轴" />
-                        <TextBox Text="{Binding Y1Abs, StringFormat={}{0:F3}, FallbackValue=99.999}" />
+                        <TextBox Text="{Binding Y1Abs, StringFormat={}{0:F2}, FallbackValue=99.99}" />
                         <Button
                             Command="{Binding GetAbsCommand}"
                             CommandParameter="1"
@@ -433,7 +433,7 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Style="{StaticResource ParamTextBlock}" Text="Z轴" />
-                        <TextBox Text="{Binding Z1Abs, StringFormat={}{0:F3}, FallbackValue=99.999}" />
+                        <TextBox Text="{Binding Z1Abs, StringFormat={}{0:F2}, FallbackValue=99.99}" />
                         <Button
                             Command="{Binding GetAbsCommand}"
                             CommandParameter="2"
@@ -442,7 +442,7 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Style="{StaticResource ParamTextBlock}" Text="R轴" />
-                        <TextBox Text="{Binding R1Abs, StringFormat={}{0:F3}, FallbackValue=99.999}" />
+                        <TextBox Text="{Binding R1Abs, StringFormat={}{0:F2}, FallbackValue=99.99}" />
                         <Button
                             Command="{Binding GetAbsCommand}"
                             CommandParameter="3"
@@ -504,7 +504,7 @@
                     <StackPanel Orientation="Horizontal">
                         <StackPanel>
                             <TextBlock Width="auto" />
-                            <TextBlock Width="50" Text="初始点" />
+                            <TextBlock Width="70" Text="初始点" />
                         </StackPanel>
                         <StackPanel>
                             <TextBlock
@@ -514,7 +514,7 @@
                             <TextBox
                                 Width="50"
                                 Margin="0"
-                                Text="{Binding InitPos.X, StringFormat={}{0:F3}, FallbackValue=99.999}" />
+                                Text="{Binding InitPos.X, StringFormat={}{0:F2}, FallbackValue=99.99}" />
                         </StackPanel>
                         <StackPanel>
                             <TextBlock
@@ -524,7 +524,7 @@
                             <TextBox
                                 Width="50"
                                 Margin="0"
-                                Text="{Binding InitPos.Y, StringFormat={}{0:F3}, FallbackValue=99.999}" />
+                                Text="{Binding InitPos.Y, StringFormat={}{0:F2}, FallbackValue=99.99}" />
                         </StackPanel>
                         <StackPanel>
                             <TextBlock
@@ -534,7 +534,7 @@
                             <TextBox
                                 Width="50"
                                 Margin="0"
-                                Text="{Binding InitPos.Z, StringFormat={}{0:F3}, FallbackValue=99.99}" />
+                                Text="{Binding InitPos.Z, StringFormat={}{0:F2}, FallbackValue=99.99}" />
                         </StackPanel>
                         <StackPanel>
                             <TextBlock
@@ -544,7 +544,7 @@
                             <TextBox
                                 Width="50"
                                 Margin="0"
-                                Text="{Binding InitPos.R, StringFormat={}{0:F3}, FallbackValue=99.99}" />
+                                Text="{Binding InitPos.R, StringFormat={}{0:F2}, FallbackValue=99.99}" />
                         </StackPanel>
                         <StackPanel>
                             <TextBlock Width="auto" />
@@ -565,23 +565,23 @@
 
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Width="50" Text="对刀点" />
+                        <TextBlock Width="70" Text="对刀点" />
                         <TextBox
                             Width="50"
                             Margin="0"
-                            Text="{Binding ToolPoint.X, StringFormat={}{0:F3}, FallbackValue=99.999}" />
+                            Text="{Binding ToolPoint.X, StringFormat={}{0:F2}, FallbackValue=99.99}" />
                         <TextBox
                             Width="50"
                             Margin="0"
-                            Text="{Binding ToolPoint.Y, StringFormat={}{0:F3}, FallbackValue=99.999}" />
+                            Text="{Binding ToolPoint.Y, StringFormat={}{0:F2}, FallbackValue=99.99}" />
                         <TextBox
                             Width="50"
                             Margin="0"
-                            Text="{Binding ToolPoint.Z, StringFormat={}{0:F3}, FallbackValue=99.99}" />
+                            Text="{Binding ToolPoint.Z, StringFormat={}{0:F2}, FallbackValue=99.99}" />
                         <TextBox
                             Width="50"
                             Margin="0"
-                            Text="{Binding ToolPoint.R, StringFormat={}{0:F3}, FallbackValue=99.99}" />
+                            Text="{Binding ToolPoint.R, StringFormat={}{0:F2}, FallbackValue=99.99}" />
                         <Button
                             Command="{Binding GetPositionCommand}"
                             CommandParameter="3"
@@ -590,6 +590,93 @@
                         <Button
                             Command="{Binding GoPositionCommand}"
                             CommandParameter="3"
+                            Content="Go"
+                            Style="{StaticResource GoButton}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Width="70" Text="飞拍起始点" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding FlyGrabPoint1.X, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding FlyGrabPoint1.Y, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding FlyGrabPoint1.Z, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding FlyGrabPoint1.R, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <Button
+                            Command="{Binding GetPositionCommand}"
+                            CommandParameter="4"
+                            Content="Get"
+                            Style="{StaticResource ParamButtonBase}" />
+                        <Button
+                            Command="{Binding GoPositionCommand}"
+                            CommandParameter="4"
+                            Content="Go"
+                            Style="{StaticResource GoButton}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Width="70" Text="飞拍结束点" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding FlyGrabPoint2.X, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding FlyGrabPoint2.Y, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding FlyGrabPoint2.Z, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding FlyGrabPoint2.R, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <Button
+                            Command="{Binding GetPositionCommand}"
+                            CommandParameter="5"
+                            Content="Get"
+                            Style="{StaticResource ParamButtonBase}" />
+                        <Button
+                            Command="{Binding GoPositionCommand}"
+                            CommandParameter="5"
+                            Content="Go"
+                            Style="{StaticResource GoButton}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Width="70" Text="贴合点" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding PastePoint1.X, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding PastePoint1.Y, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding PastePoint1.Z, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <TextBox
+                            Width="50"
+                            Margin="0"
+                            Text="{Binding PastePoint1.R, StringFormat={}{0:F2}, FallbackValue=99.99}" />
+                        <Button
+                            Command="{Binding GetPositionCommand}"
+                            CommandParameter="6"
+                            Content="Get"
+                            Style="{StaticResource ParamButtonBase}" />
+                        <Button
+                            Command="{Binding GoPositionCommand}"
+                            CommandParameter="6"
                             Content="Go"
                             Style="{StaticResource GoButton}" />
                     </StackPanel>

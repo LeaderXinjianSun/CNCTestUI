@@ -30,6 +30,9 @@ namespace CNCTestUI.Models
         public double Z1CarvePos;
 
         public MPoint ToolPoint;
+        public MPoint FlyGrabPoint1;
+        public MPoint FlyGrabPoint2;
+        public MPoint PastePoint1;
     }
     public class MPoint
     {

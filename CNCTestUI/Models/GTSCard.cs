@@ -452,10 +452,11 @@ namespace CNCTestUI.Models
             }
             return true;
         }
-        public void AxisLnXYMove(double targetx,double targety,double speed)
+        public void AxisLnXYMove(List<MPoint> targets, double speed)
         {
             gts.mc.GT_CrdClear(0, 1, 0);
-            gts.mc.GT_LnXY(0, 1, (int)(targetx / X1.Equiv), (int)(targety / Y1.Equiv), speed / X1.Equiv / 1000, 10, 0, 0);
+            for (int i = 0; i < targets.Count; i++)
+                gts.mc.GT_LnXY(0, 1, (int)(targets[i].X / X1.Equiv), (int)(targets[i].Y / Y1.Equiv), speed / X1.Equiv / 1000, 2, 0, 0);
             gts.mc.GT_CrdStart(0, 1, 0);
         }
         public void AxisLnXYZMove(List<M1Point> targets)
@@ -553,6 +554,15 @@ namespace CNCTestUI.Models
             double pValue; uint pClock;
             gts.mc.GT_GetAdc(1, adc, out pValue, 1, out pClock);
             return pValue;
+        }
+        public void ComparePulseTrigger()
+        {
+            gts.mc.GT_ComparePulse(0, 1, 0, 100);//HSIO0输出100us的脉冲
+        }
+        public void AxisCompare(int[] Buf1)
+        { 
+            int[] Buf2 = new int[20];
+            gts.mc.GT_CompareData(0,1,0,0,0,100,ref Buf1[0],1, ref Buf2[0], 0);
         }
         #endregion
     }

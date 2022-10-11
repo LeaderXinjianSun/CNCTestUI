@@ -220,6 +220,24 @@ namespace CNCTestUI.ViewModels
             get { return toolPoint; }
             set { SetProperty(ref toolPoint, value); }
         }
+        private ViPoint flyGrabPoint1;
+        public ViPoint FlyGrabPoint1
+        {
+            get { return flyGrabPoint1; }
+            set { SetProperty(ref flyGrabPoint1, value); }
+        }
+        private ViPoint flyGrabPoint2;
+        public ViPoint FlyGrabPoint2
+        {
+            get { return flyGrabPoint2; }
+            set { SetProperty(ref flyGrabPoint2, value); }
+        }
+        private ViPoint pastePoint1;
+        public ViPoint PastePoint1
+        {
+            get { return pastePoint1; }
+            set { SetProperty(ref pastePoint1, value); }
+        }
         private double z1SafePos;
         public double Z1SafePos
         {
@@ -301,7 +319,14 @@ namespace CNCTestUI.ViewModels
         private DelegateCommand<object> operateButtonCommand;
         public DelegateCommand<object> OperateButtonCommand =>
             operateButtonCommand ?? (operateButtonCommand = new DelegateCommand<object>(ExecuteOperateButtonCommand));
+        private DelegateCommand grabTriggerCommand;
+        public DelegateCommand GrabTriggerCommand =>
+            grabTriggerCommand ?? (grabTriggerCommand = new DelegateCommand(ExecuteGrabTriggerCommand));
 
+        void ExecuteGrabTriggerCommand()
+        {
+            GTSCard.Instance.ComparePulseTrigger();
+        }
         async void ExecuteOperateButtonCommand(object obj)
         {
             switch (obj.ToString())
@@ -316,21 +341,23 @@ namespace CNCTestUI.ViewModels
                         GTSCard.Instance.ServoOn(GTSCard.Instance.R1);
                         IsAxisBusy = true;
                         await Task.Delay(200);
-                        List<M1Point> m1Points;
-                        using (var reader = new StreamReader(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Points.csv")))
-                        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
-                        {
-                            m1Points = csv.GetRecords<M1Point>().ToList();
-                        }
-                        if (m1Points.Count > 0)
-                        {
-                            await Task.Run(() => ALineMotion(token, m1Points), token).ContinueWith(t => IsAxisBusy = false);
-                        }
-                        else
-                        {
-                            MessageBox.Show("未加载到点", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            IsAxisBusy = false;
-                        }
+                        await Task.Run(() => ALineMotion1(token), token).ContinueWith(t => IsAxisBusy = false);
+                        //List<M1Point> m1Points;
+                        //using (var reader = new StreamReader(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Points.csv")))
+                        //using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                        //{
+                        //    m1Points = csv.GetRecords<M1Point>().ToList();
+                        //}
+                        //if (m1Points.Count > 0)
+                        //{
+                        //    await Task.Run(() => ALineMotion(token, m1Points), token).ContinueWith(t => IsAxisBusy = false);
+                        //}
+                        //else
+                        //{
+                        //    MessageBox.Show("未加载到点", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        //    IsAxisBusy = false;
+                        //}
+
                     }
                     break;
                 case "1":
@@ -378,7 +405,7 @@ namespace CNCTestUI.ViewModels
                     if (MessageBox.Show($"确认运动到\"初始点\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
                     {
                         IsAxisBusy = true;
-                        await Task.Run(() => GoActionXYZR(token, InitPos), token).ContinueWith(t => IsAxisBusy = false);
+                        await Task.Run(() => GoActionXY(token, InitPos), token).ContinueWith(t => IsAxisBusy = false);
                     }
                     break;
                 case "1":
@@ -393,6 +420,34 @@ namespace CNCTestUI.ViewModels
                     {
                         IsAxisBusy = true;
                         await Task.Run(() => GoAction(token, GTSCard.Instance.Z1, Z1CarvePos, Z1JogSpeed), token).ContinueWith(t => IsAxisBusy = false);
+                    }
+                    break;
+                case "3":
+                    if (MessageBox.Show($"确认运动到\"对刀点\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        IsAxisBusy = true;
+                        await Task.Run(() => GoActionXY(token, ToolPoint), token).ContinueWith(t => IsAxisBusy = false);
+                    }
+                    break;
+                case "4":
+                    if (MessageBox.Show($"确认运动到\"飞拍起始点\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        IsAxisBusy = true;
+                        await Task.Run(() => GoActionXY(token, FlyGrabPoint1), token).ContinueWith(t => IsAxisBusy = false);
+                    }
+                    break;
+                case "5":
+                    if (MessageBox.Show($"确认运动到\"飞拍结束点\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        IsAxisBusy = true;
+                        await Task.Run(() => GoActionXY(token, FlyGrabPoint2), token).ContinueWith(t => IsAxisBusy = false);
+                    }
+                    break;
+                case "6":
+                    if (MessageBox.Show($"确认运动到\"贴合点\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        IsAxisBusy = true;
+                        await Task.Run(() => GoActionXY(token, PastePoint1), token).ContinueWith(t => IsAxisBusy = false);
                     }
                     break;
                 default:
@@ -416,6 +471,41 @@ namespace CNCTestUI.ViewModels
                         break;
                     case 1:
                         if (GTSCard.Instance.AxisCheckDone(axis))
+                        {
+                            return;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                System.Threading.Thread.Sleep(100);
+            }
+        }
+        private void GoActionXY(CancellationToken token, ViPoint Pos)
+        {
+            AxisParm axisX, axisY;
+            double xspeed, yspeed;
+            axisX = GTSCard.Instance.X1;
+            axisY = GTSCard.Instance.Y1;
+            xspeed = X1JogSpeed;
+            yspeed = Y1JogSpeed;
+
+            int stepnum = 2;
+            while (true)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+                switch (stepnum)
+                {
+                    case 2:
+                        GTSCard.Instance.AxisPosMove(ref axisX, Pos.X, xspeed);
+                        GTSCard.Instance.AxisPosMove(ref axisY, Pos.Y, yspeed);
+                        stepnum = 3;
+                        break;
+                    case 3:
+                        if (GTSCard.Instance.AxisCheckDone(axisX) && GTSCard.Instance.AxisCheckDone(axisY))
                         {
                             return;
                         }
@@ -548,6 +638,74 @@ namespace CNCTestUI.ViewModels
                 System.Threading.Thread.Sleep(10);
             }
         }
+        private void ALineMotion1(CancellationToken token)
+        {
+            int stepnum = 0;
+            Stopwatch sw = new Stopwatch();
+            while (true)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+                switch (stepnum)
+                {
+                    case 0:
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.X1, myParam.ToolPoint.X, myParam.X1RunSpeed);
+                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Y1, myParam.ToolPoint.Y, myParam.X1RunSpeed);
+                        stepnum = 3;
+                        break;
+                    case 3:
+                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.X1) && GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Y1))
+                        {
+                            var r = GTSCard.Instance.SetCrd(myParam.ToolPoint.X, myParam.ToolPoint.Y);
+                            if (!r)
+                            {
+                                addMessage("坐标系初始化:失败");
+                            }
+                            else
+                            {
+                                addMessage("初始化坐标系");
+                            }
+                            stepnum = 4;
+                        }
+                        break;
+                    case 4:
+                        {
+                            List<MPoint> targets = new List<MPoint>();
+                            targets.Add(myParam.FlyGrabPoint1);
+                            targets.Add(myParam.FlyGrabPoint2);
+                            GTSCard.Instance.AxisLnXYMove(targets, 2000);
+                            int[] Buf1 = new int[10];
+                            Buf1[0] = (int)((myParam.FlyGrabPoint2.X - myParam.FlyGrabPoint1.X) / GTSCard.Instance.X1.Equiv);
+                            GTSCard.Instance.AxisCompare(Buf1);
+                            stepnum = 5;
+                        }
+                        break;
+                    case 5:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 6;
+                        }
+                        break;
+                    case 6:
+                        {
+                            List<MPoint> targets = new List<MPoint>();
+                            targets.Add(myParam.PastePoint1);
+                            GTSCard.Instance.AxisLnXYMove(targets, 2000);
+                            stepnum = 7;
+                        }
+                        break;
+                    case 7:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            return;
+                        }
+                        break;
+                }
+                System.Threading.Thread.Sleep(10);
+            }
+        }
         private void ARCMotion(CancellationToken token, Queue<GCodeItem1> gCodeItem1s)
         {
             int stepnum = 0;
@@ -672,7 +830,7 @@ namespace CNCTestUI.ViewModels
                             int ystart = gcode.IndexOf('Y');
                             targetX = double.Parse(gcode.Substring(xstart + 1, ystart - xstart - 1));
                             targetY = double.Parse(gcode.Substring(ystart + 1));
-                            GTSCard.Instance.AxisLnXYMove(targetX, targetY, myParam.X1RunSpeed);
+                            //GTSCard.Instance.AxisLnXYMove(targetX, targetY, myParam.X1RunSpeed);
                             stepnum = 103;
                         }
                         break;
@@ -720,7 +878,7 @@ namespace CNCTestUI.ViewModels
                     case 205:
                         if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
                         {
-                            GTSCard.Instance.AxisLnXYMove(targetX, targetY, myParam.X1RunSpeed);
+                            //GTSCard.Instance.AxisLnXYMove(targetX, targetY, myParam.X1RunSpeed);
                             stepnum = 206;
                         }
                         break;
@@ -880,7 +1038,7 @@ namespace CNCTestUI.ViewModels
                         break;
                     case 502:
                         {
-                            GTSCard.Instance.AxisLnXYMove(0, 0, myParam.X1RunSpeed);
+                            //GTSCard.Instance.AxisLnXYMove(0, 0, myParam.X1RunSpeed);
                             stepnum = 503;
                         }
                         break;
@@ -904,37 +1062,64 @@ namespace CNCTestUI.ViewModels
                 case "0":
                     if (MessageBox.Show($"确认设置\"初始点\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
                     {
-                        InitPos.X = myParam.InitPos.X = GTSCard.Instance.GetEnc(GTSCard.Instance.X1);
-                        InitPos.Y = myParam.InitPos.Y = GTSCard.Instance.GetEnc(GTSCard.Instance.Y1);
-                        InitPos.Z = myParam.InitPos.Z = GTSCard.Instance.GetEnc(GTSCard.Instance.Z1);
-                        InitPos.R = myParam.InitPos.R = GTSCard.Instance.GetEnc(GTSCard.Instance.R1);
+                        InitPos.X = myParam.InitPos.X = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.X1), 2);
+                        InitPos.Y = myParam.InitPos.Y = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.Y1), 2);
+                        InitPos.Z = myParam.InitPos.Z = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.Z1), 2);
+                        InitPos.R = myParam.InitPos.R = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.R1), 2);
                     }
                     break;
                 case "1":
                     if (MessageBox.Show($"确认设置\"Z轴安全位\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
                     {
-                        Z1SafePos = myParam.Z1SafePos = GTSCard.Instance.GetEnc(GTSCard.Instance.Z1);
+                        Z1SafePos = myParam.Z1SafePos = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.Z1), 2);
                     }
                     break;
                 case "2":
                     if (MessageBox.Show($"确认设置\"Z轴切割位\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
                     {
-                        Z1CarvePos = myParam.Z1CarvePos = GTSCard.Instance.GetEnc(GTSCard.Instance.Z1);
+                        Z1CarvePos = myParam.Z1CarvePos = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.Z1), 2);
                     }
                     break;
                 case "3":
                     if (MessageBox.Show($"确认设置\"对刀\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
                     {
-                        ToolPoint.X = myParam.ToolPoint.X = GTSCard.Instance.GetEnc(GTSCard.Instance.X1);
-                        ToolPoint.Y = myParam.ToolPoint.Y = GTSCard.Instance.GetEnc(GTSCard.Instance.Y1);
-                        ToolPoint.Z = myParam.ToolPoint.Z = GTSCard.Instance.GetEnc(GTSCard.Instance.Z1);
-                        ToolPoint.R = myParam.ToolPoint.R = GTSCard.Instance.GetEnc(GTSCard.Instance.R1);
+                        ToolPoint.X = myParam.ToolPoint.X = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.X1), 2);
+                        ToolPoint.Y = myParam.ToolPoint.Y = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.Y1), 2);
+                        ToolPoint.Z = myParam.ToolPoint.Z = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.Z1), 2);
+                        ToolPoint.R = myParam.ToolPoint.R = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.R1), 2);
 
                         var r = GTSCard.Instance.SetCrd(myParam.ToolPoint.X, myParam.ToolPoint.Y);
                         if (!r)
                         {
                             MessageBox.Show("对刀失败", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
+                    }
+                    break;
+                case "4":
+                    if (MessageBox.Show($"确认设置\"飞拍起始点\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        FlyGrabPoint1.X = myParam.FlyGrabPoint1.X = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.X1), 2);
+                        FlyGrabPoint1.Y = myParam.FlyGrabPoint1.Y = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.Y1), 2);
+                        FlyGrabPoint1.Z = myParam.FlyGrabPoint1.Z = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.Z1), 2);
+                        FlyGrabPoint1.R = myParam.FlyGrabPoint1.R = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.R1), 2);
+                    }
+                    break;
+                case "5":
+                    if (MessageBox.Show($"确认设置\"飞拍结束点\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        FlyGrabPoint2.X = myParam.FlyGrabPoint2.X = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.X1), 2);
+                        FlyGrabPoint2.Y = myParam.FlyGrabPoint2.Y = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.Y1), 2);
+                        FlyGrabPoint2.Z = myParam.FlyGrabPoint2.Z = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.Z1), 2);
+                        FlyGrabPoint2.R = myParam.FlyGrabPoint2.R = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.R1), 2);
+                    }
+                    break;
+                case "6":
+                    if (MessageBox.Show($"确认设置\"贴合点\"吗？", "确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        PastePoint1.X = myParam.PastePoint1.X = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.X1), 2);
+                        PastePoint1.Y = myParam.PastePoint1.Y = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.Y1), 2);
+                        PastePoint1.Z = myParam.PastePoint1.Z = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.Z1), 2);
+                        PastePoint1.R = myParam.PastePoint1.R = Math.Round(GTSCard.Instance.GetEnc(GTSCard.Instance.R1), 2);
                     }
                     break;
                 default:
@@ -964,6 +1149,21 @@ namespace CNCTestUI.ViewModels
             myParam.ToolPoint.Y = ToolPoint.Y;
             myParam.ToolPoint.Z = ToolPoint.Z;
             myParam.ToolPoint.R = ToolPoint.R;
+
+            myParam.FlyGrabPoint1.X = FlyGrabPoint1.X;
+            myParam.FlyGrabPoint1.Y = FlyGrabPoint1.Y;
+            myParam.FlyGrabPoint1.Z = FlyGrabPoint1.Z;
+            myParam.FlyGrabPoint1.R = FlyGrabPoint1.R;
+
+            myParam.FlyGrabPoint2.X = FlyGrabPoint2.X;
+            myParam.FlyGrabPoint2.Y = FlyGrabPoint2.Y;
+            myParam.FlyGrabPoint2.Z = FlyGrabPoint2.Z;
+            myParam.FlyGrabPoint2.R = FlyGrabPoint2.R;
+
+            myParam.PastePoint1.X = PastePoint1.X;
+            myParam.PastePoint1.Y = PastePoint1.Y;
+            myParam.PastePoint1.Z = PastePoint1.Z;
+            myParam.PastePoint1.R = PastePoint1.R;
 
             myParam.Z1SafePos = Z1SafePos;
             myParam.Z1CarvePos = Z1CarvePos;
@@ -1136,6 +1336,39 @@ namespace CNCTestUI.ViewModels
                 Z = myParam.ToolPoint.Z,
                 R = myParam.ToolPoint.R
             };
+            if (myParam.FlyGrabPoint1 == null)
+            {
+                myParam.FlyGrabPoint1 = new MPoint();
+            }
+            FlyGrabPoint1 = new ViPoint()
+            {
+                X = myParam.FlyGrabPoint1.X,
+                Y = myParam.FlyGrabPoint1.Y,
+                Z = myParam.FlyGrabPoint1.Z,
+                R = myParam.FlyGrabPoint1.R
+            };
+            if (myParam.FlyGrabPoint2 == null)
+            {
+                myParam.FlyGrabPoint2 = new MPoint();
+            }
+            FlyGrabPoint2 = new ViPoint()
+            {
+                X = myParam.FlyGrabPoint2.X,
+                Y = myParam.FlyGrabPoint2.Y,
+                Z = myParam.FlyGrabPoint2.Z,
+                R = myParam.FlyGrabPoint2.R
+            };
+            if (myParam.PastePoint1 == null)
+            {
+                myParam.PastePoint1 = new MPoint();
+            }
+            PastePoint1 = new ViPoint()
+            {
+                X = myParam.PastePoint1.X,
+                Y = myParam.PastePoint1.Y,
+                Z = myParam.PastePoint1.Z,
+                R = myParam.PastePoint1.R
+            };
             Z1SafePos = myParam.Z1SafePos;
             Z1CarvePos = myParam.Z1CarvePos;
             if (ServoModbus.Instance.Connect(serialCOM))
@@ -1148,13 +1381,13 @@ namespace CNCTestUI.ViewModels
                 GTSCard.Instance.SigAxisPosSet(GTSCard.Instance.Y1, a - myParam.Y1Abs);
                 GTSCard.Instance.SigAxisEncSet(GTSCard.Instance.Y1, a - myParam.Y1Abs);
 
-                a = ServoModbus.Instance.ReadInovance(3) * GTSCard.Instance.Z1.Equiv;
-                GTSCard.Instance.SigAxisPosSet(GTSCard.Instance.Z1, a - myParam.Z1Abs);
-                GTSCard.Instance.SigAxisEncSet(GTSCard.Instance.Z1, a - myParam.Z1Abs);
+                //a = ServoModbus.Instance.ReadInovance(3) * GTSCard.Instance.Z1.Equiv;
+                //GTSCard.Instance.SigAxisPosSet(GTSCard.Instance.Z1, a - myParam.Z1Abs);
+                //GTSCard.Instance.SigAxisEncSet(GTSCard.Instance.Z1, a - myParam.Z1Abs);
 
-                a = ServoModbus.Instance.ReadInovance(4) * GTSCard.Instance.R1.Equiv;
-                GTSCard.Instance.SigAxisPosSet(GTSCard.Instance.R1, a - myParam.R1Abs);
-                GTSCard.Instance.SigAxisEncSet(GTSCard.Instance.R1, a - myParam.R1Abs);
+                //a = ServoModbus.Instance.ReadInovance(4) * GTSCard.Instance.R1.Equiv;
+                //GTSCard.Instance.SigAxisPosSet(GTSCard.Instance.R1, a - myParam.R1Abs);
+                //GTSCard.Instance.SigAxisEncSet(GTSCard.Instance.R1, a - myParam.R1Abs);
 
 
             }
