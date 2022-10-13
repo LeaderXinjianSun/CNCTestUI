@@ -671,8 +671,10 @@ namespace CNCTestUI.ViewModels
                             targets.Add(myParam.FlyGrabPoint2);
                             GTSCard.Instance.AxisLnXYMove(targets, myParam.X1RunSpeed);
                             int[] Buf1 = new int[10];
-                            Buf1[0] = (int)((myParam.FlyGrabPoint2.X - myParam.FlyGrabPoint1.X) / GTSCard.Instance.X1.Equiv);
-                            GTSCard.Instance.AxisCompare(Buf1);
+                            Buf1[0] = 13000;
+                            Buf1[1] = 17000;
+                            Buf1[2] = 21000;
+                            GTSCard.Instance.AxisCompare(Buf1, 3);
                             stepnum = 5;
                         }
                         break;
@@ -1247,7 +1249,10 @@ namespace CNCTestUI.ViewModels
         }
         void ExecuteAxisHomeCommand()
         {
+            if (axisParm.AxisId == GTSCard.Instance.X1.AxisId)
+            {
 
+            }
         }
         void ExecuteAxisServoOffCommand()
         {

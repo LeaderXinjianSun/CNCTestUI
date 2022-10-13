@@ -455,8 +455,12 @@ namespace CNCTestUI.Models
         public void AxisLnXYMove(List<MPoint> targets, double speed)
         {
             gts.mc.GT_CrdClear(0, 1, 0);
+            gts.mc.TCrdData[] crdData = new gts.mc.TCrdData[200];
+            gts.mc.GT_InitLookAhead(0, 1, 0, 1, 4, 200, ref crdData[0]);
             for (int i = 0; i < targets.Count; i++)
-                gts.mc.GT_LnXY(0, 1, (int)(targets[i].X / X1.Equiv), (int)(targets[i].Y / Y1.Equiv), speed / X1.Equiv / 1000, 2, 0, 0);
+                gts.mc.GT_LnXY(0, 1, (int)(targets[i].X / X1.Equiv), (int)(targets[i].Y / Y1.Equiv), speed / X1.Equiv / 1000, 4, 0, 0);
+
+            gts.mc.GT_CrdData(0, 1, System.IntPtr.Zero, 0);
             gts.mc.GT_CrdStart(0, 1, 0);
         }
         public void AxisLnXYZMove(List<M1Point> targets)
@@ -549,6 +553,10 @@ namespace CNCTestUI.Models
         {
             gts.mc.GT_Stop(_AxisParam.CardNo, 1 << (_AxisParam.AxisId - 1), type << (_AxisParam.AxisId - 1));
         }
+        public void AxisCrtStop(int type)
+        {
+            //gts.mc.GT_Stop(0,);
+        }
         public double GetAdc(short adc)
         {
             double pValue; uint pClock;
@@ -559,10 +567,10 @@ namespace CNCTestUI.Models
         {
             gts.mc.GT_ComparePulse(0, 1, 0, 100);//HSIO0输出100us的脉冲
         }
-        public void AxisCompare(int[] Buf1)
+        public void AxisCompare(int[] Buf1,int count1)
         { 
             int[] Buf2 = new int[20];
-            gts.mc.GT_CompareData(0,1,0,0,0,100,ref Buf1[0],1, ref Buf2[0], 0);
+            gts.mc.GT_CompareData(0, 1, 1, 0, 0, 100, ref Buf1[0], (short)count1, ref Buf2[0], 0);
         }
         #endregion
     }
