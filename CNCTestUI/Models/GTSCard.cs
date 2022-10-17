@@ -575,7 +575,7 @@ namespace CNCTestUI.Models
         {
             gts.mc.GT_PrfFollow(0, slave.AxisId, 0);
             gts.mc.GT_FollowClear(0, slave.AxisId, 0);
-            gts.mc.GT_SetFollowMaster(0, slave.AxisId, master.AxisId, gts.mc.GEAR_MASTER_PROFILE, 0);
+            gts.mc.GT_SetFollowMaster(0, slave.AxisId, master.AxisId, gts.mc.GEAR_MASTER_ENCODER, 0);
             for (int i = 0; i < data.GetUpperBound(0) + 1; i++)
             {
                 gts.mc.GT_FollowData(0, slave.AxisId, (int)data[i, 0], data[i, 1], (short)data[i, 2], 0);

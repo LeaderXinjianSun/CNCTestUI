@@ -319,7 +319,7 @@ namespace CNCTestUI.ViewModels
                         CancellationToken token = source.Token;
                         GTSCard.Instance.ServoOn(GTSCard.Instance.X1);
                         GTSCard.Instance.ServoOn(GTSCard.Instance.Y1);
-                        GTSCard.Instance.ServoOn(GTSCard.Instance.Z1);
+                        GTSCard.Instance.ServoOff(GTSCard.Instance.Z1);
                         GTSCard.Instance.ServoOn(GTSCard.Instance.R1);
                         IsAxisBusy = true;
                         await Task.Delay(200);
@@ -718,11 +718,11 @@ namespace CNCTestUI.ViewModels
         private void FollowMotion(CancellationToken token)
         {
             GTSCard.Instance.AxisJog(GTSCard.Instance.Z1, 1, Z1JogSpeed);
-            double[,] data1 = new double[3, 3] { { 10000, 5000, 0 }, { 20000, 20000, 1 }, { 10000, 5000, 2 } };
+            double[,] data1 = new double[3, 3] { { 10000, 5000, 0 }, { 20000, 15000, 1 }, { 30000, 20000, 2 } };
             GTSCard.Instance.SigAxisPosZero(GTSCard.Instance.Z1);
             GTSCard.Instance.SigAxisPosZero(GTSCard.Instance.R1);
             GTSCard.Instance.AxisFollow(GTSCard.Instance.Z1, GTSCard.Instance.R1, data1);
-            GTSCard.Instance.AxisJog(GTSCard.Instance.Z1, 1, Z1JogSpeed);
+            //GTSCard.Instance.AxisJog(GTSCard.Instance.Z1, 1, Z1JogSpeed);
             while (true)
             {
                 if (token.IsCancellationRequested)
@@ -731,8 +731,8 @@ namespace CNCTestUI.ViewModels
                 }
                 if (GTSCard.Instance.CheckFollowDone(GTSCard.Instance.R1,1))
                 {
-                    System.Threading.Thread.Sleep(5000);
-                    GTSCard.Instance.AxisStop(GTSCard.Instance.Z1,1);
+                    //System.Threading.Thread.Sleep(1000);
+                    //GTSCard.Instance.AxisStop(GTSCard.Instance.Z1, 1);
                     return;
                 }
                 System.Threading.Thread.Sleep(100);
