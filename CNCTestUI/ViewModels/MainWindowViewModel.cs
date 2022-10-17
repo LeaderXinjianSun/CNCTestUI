@@ -323,26 +323,27 @@ namespace CNCTestUI.ViewModels
                         GTSCard.Instance.ServoOn(GTSCard.Instance.R1);
                         IsAxisBusy = true;
                         await Task.Delay(200);
-                        List<M1Point> pickPoints,pastePoints;
-                        using (var reader = new StreamReader(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "PickPoints.csv")))
-                        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
-                        {
-                            pickPoints = csv.GetRecords<M1Point>().ToList();
-                        }
-                        using (var reader = new StreamReader(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "PastePoints.csv")))
-                        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
-                        {
-                            pastePoints = csv.GetRecords<M1Point>().ToList();
-                        }
-                        if (pickPoints.Count > 0 && pastePoints.Count > 0)
-                        {
-                            await Task.Run(() => ALineMotion(token, pickPoints, pastePoints), token).ContinueWith(t => IsAxisBusy = false);
-                        }
-                        else
-                        {
-                            MessageBox.Show("未加载到点", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            IsAxisBusy = false;
-                        }
+                        await Task.Run(() => FollowMotion(token), token).ContinueWith(t => IsAxisBusy = false);
+                        //List<M1Point> pickPoints,pastePoints;
+                        //using (var reader = new StreamReader(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "PickPoints.csv")))
+                        //using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                        //{
+                        //    pickPoints = csv.GetRecords<M1Point>().ToList();
+                        //}
+                        //using (var reader = new StreamReader(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "PastePoints.csv")))
+                        //using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                        //{
+                        //    pastePoints = csv.GetRecords<M1Point>().ToList();
+                        //}
+                        //if (pickPoints.Count > 0 && pastePoints.Count > 0)
+                        //{
+                        //    await Task.Run(() => ALineMotion(token, pickPoints, pastePoints), token).ContinueWith(t => IsAxisBusy = false);
+                        //}
+                        //else
+                        //{
+                        //    MessageBox.Show("未加载到点", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        //    IsAxisBusy = false;
+                        //}
                     }
                     break;
                 case "1":
@@ -350,7 +351,10 @@ namespace CNCTestUI.ViewModels
                     {
                         source.Cancel();
                     }
-                    GTSCard.Instance.AxisStop(0, 1);
+                    GTSCard.Instance.AxisStop(GTSCard.Instance.X1, 1);
+                    GTSCard.Instance.AxisStop(GTSCard.Instance.Y1, 1);
+                    GTSCard.Instance.AxisStop(GTSCard.Instance.Z1, 1);
+                    GTSCard.Instance.AxisStop(GTSCard.Instance.R1, 1);
                     IsAxisBusy = false;
                     break;
                 default:
@@ -709,6 +713,29 @@ namespace CNCTestUI.ViewModels
                         break;
                 }
                 System.Threading.Thread.Sleep(10);
+            }
+        }
+        private void FollowMotion(CancellationToken token)
+        {
+            GTSCard.Instance.AxisJog(GTSCard.Instance.Z1, 1, Z1JogSpeed);
+            double[,] data1 = new double[3, 3] { { 10000, 5000, 0 }, { 20000, 20000, 1 }, { 10000, 5000, 2 } };
+            GTSCard.Instance.SigAxisPosZero(GTSCard.Instance.Z1);
+            GTSCard.Instance.SigAxisPosZero(GTSCard.Instance.R1);
+            GTSCard.Instance.AxisFollow(GTSCard.Instance.Z1, GTSCard.Instance.R1, data1);
+            GTSCard.Instance.AxisJog(GTSCard.Instance.Z1, 1, Z1JogSpeed);
+            while (true)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+                if (GTSCard.Instance.CheckFollowDone(GTSCard.Instance.R1,1))
+                {
+                    System.Threading.Thread.Sleep(5000);
+                    GTSCard.Instance.AxisStop(GTSCard.Instance.Z1,1);
+                    return;
+                }
+                System.Threading.Thread.Sleep(100);
             }
         }
         private void ARCMotion(CancellationToken token, Queue<GCodeItem1> gCodeItem1s)

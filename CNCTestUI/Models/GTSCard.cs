@@ -320,6 +320,10 @@ namespace CNCTestUI.Models
         {
             gts.mc.GT_SetEncPos(_axisParam.CardNo, _axisParam.AxisId, (int)Math.Round(value / _axisParam.Equiv, 0));
         }
+        public void SigAxisPosZero(AxisParm _axisParam)
+        {
+            gts.mc.GT_ZeroPos(_axisParam.CardNo, _axisParam.AxisId, 1);
+        }
         public void AxisPosMove(ref AxisParm _AxisParam, double givePos, double speed = 0.0)
         {
             _AxisParam.Target = givePos / _AxisParam.Equiv;
@@ -566,6 +570,25 @@ namespace CNCTestUI.Models
         {
             int[] Buf2 = new int[20];
             gts.mc.GT_CompareData(0, encoder, 1, 0, 0, 100, ref Buf1[0], (short)count1, ref Buf2[0], 0);
+        }
+        public void AxisFollow(AxisParm master, AxisParm slave, double[,] data)
+        {
+            gts.mc.GT_PrfFollow(0, slave.AxisId, 0);
+            gts.mc.GT_FollowClear(0, slave.AxisId, 0);
+            gts.mc.GT_SetFollowMaster(0, slave.AxisId, master.AxisId, gts.mc.GEAR_MASTER_PROFILE, 0);
+            for (int i = 0; i < data.GetUpperBound(0) + 1; i++)
+            {
+                gts.mc.GT_FollowData(0, slave.AxisId, (int)data[i, 0], data[i, 1], (short)data[i, 2], 0);
+            }
+            gts.mc.GT_SetFollowLoop(0, slave.AxisId, 1);
+            gts.mc.GT_SetFollowEvent(0, slave.AxisId, gts.mc.FOLLOW_EVENT_START, 1, 0);
+            gts.mc.GT_FollowStart(0, 1 << (slave.AxisId - 1), 0 << (slave.AxisId - 1));
+        }
+        public bool CheckFollowDone(AxisParm slave,int loop)
+        {
+            int pLoop;
+            gts.mc.GT_GetFollowLoop(0,slave.AxisId,out pLoop);
+            return pLoop == loop;
         }
         #endregion
     }

@@ -83,10 +83,7 @@
                             CommandParameter="1"
                             Content="停止"
                             Style="{StaticResource OperateButtonBase}" />
-                        <Button
-                            Command="{Binding GrabTriggerCommand}"
-                            Content="触发"
-                            Style="{StaticResource OperateButtonBase}" />
+
                     </WrapPanel>
                 </GroupBox>
                 <GroupBox Grid.Row="1" Header="信息">
