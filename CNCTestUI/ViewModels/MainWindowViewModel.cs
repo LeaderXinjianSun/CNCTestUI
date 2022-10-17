@@ -509,22 +509,6 @@ namespace CNCTestUI.ViewModels
                 }
                 switch (stepnum)
                 {
-                    //case 0:
-                    //    GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.Z1SafePos, myParam.Z1RunSpeed);
-                    //    stepnum = 1;
-                    //    break;
-                    //case 1:
-                    //    if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
-                    //    {
-                    //        stepnum = 2;
-                    //    }
-                    //    break;
-                    //case 0:
-                    //    GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.X1, myParam.ToolPoint.X, myParam.X1RunSpeed);
-                    //    GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Y1, myParam.ToolPoint.Y, myParam.X1RunSpeed);
-                    //    GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.ToolPoint.Z, myParam.Z1RunSpeed);
-                    //    stepnum = 3;
-                    //    break;
                     case 0:
                         {
                             var r = GTSCard.Instance.SetCrd(myParam.ToolPoint.X, myParam.ToolPoint.Y, myParam.ToolPoint.Z);
@@ -540,21 +524,181 @@ namespace CNCTestUI.ViewModels
                         }
                         break;
                     case 4:
-                        GTSCard.Instance.AxisLnXYZMove(pickPoints);
-                        stepnum = 5;
+                        {
+                            //取料
+                            List<M1Point> p1s = new List<M1Point>();
+                            for (int i = 0; i < pickPoints.Count - 1; i++)
+                            {
+                                p1s.Add(pickPoints[i]);
+                            }
+                            GTSCard.Instance.AxisLnXYZMove(p1s);
+                            stepnum = 5;
+                        }
                         break;
                     case 5:
                         if (GTSCard.Instance.AxisCheckCrdDone())
                         {
-                            //addMessage(DateTime.Now.ToString("HH:mm:ss:fff"));
                             stepnum = 6;
                         }
                         break;
                     case 6:
-                        GTSCard.Instance.AxisLnXYZMove(pastePoints);
-                        stepnum = 7;
+                        {
+                            //取料飞拍
+                            List<M1Point> p1s = new List<M1Point>();
+                            p1s.Add(pickPoints[pickPoints.Count - 1]);
+                            GTSCard.Instance.AxisLnXYZMove(p1s);
+                            int[] Buf1 = new int[10];
+                            Buf1[0] = 1000;
+                            Buf1[1] = 5500;
+                            Buf1[2] = 10000;
+                            GTSCard.Instance.AxisCompare(2, Buf1, 3);
+                            stepnum = 7;
+                        }
                         break;
                     case 7:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 8;
+                        }
+                        break;
+                    case 8:
+                        {
+                            //产品1-3飞拍
+                            List<M1Point> p1s = new List<M1Point>();
+                            p1s.Add(pastePoints[0]);
+                            p1s.Add(pastePoints[1]);
+                            GTSCard.Instance.AxisLnXYZMove(p1s);
+                            int[] Buf1 = new int[10];
+                            Buf1[0] = 1000;
+                            Buf1[1] = 8000;
+                            Buf1[2] = 15000;
+                            GTSCard.Instance.AxisCompare(1, Buf1, 3);
+                            stepnum = 9;
+                        }
+                        break;
+                    case 9:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 10;
+                        }
+                        break;
+                    case 10:
+                        {
+                            //产品4-6飞拍
+                            List<M1Point> p1s = new List<M1Point>();
+                            p1s.Add(pastePoints[2]);
+                            p1s.Add(pastePoints[3]);
+                            GTSCard.Instance.AxisLnXYZMove(p1s);
+                            int[] Buf1 = new int[10];
+                            Buf1[0] = -1000;
+                            Buf1[1] = -8000;
+                            Buf1[2] = -15000;
+                            GTSCard.Instance.AxisCompare(1, Buf1, 3);
+                            stepnum = 11;
+                        }
+                        break;
+                    case 11:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 12;
+                        }
+                        break;
+                    case 12:
+                        {
+                            //产品7-9飞拍
+                            List<M1Point> p1s = new List<M1Point>();
+                            p1s.Add(pastePoints[4]);
+                            p1s.Add(pastePoints[5]);
+                            GTSCard.Instance.AxisLnXYZMove(p1s);
+                            int[] Buf1 = new int[10];
+                            Buf1[0] = 1000;
+                            Buf1[1] = 8000;
+                            Buf1[2] = 15000;
+                            GTSCard.Instance.AxisCompare(1, Buf1, 3);
+                            stepnum = 13;
+                        }
+                        break;
+                    case 13:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 14;
+                        }
+                        break;
+                    case 14:
+                        {
+                            //贴
+                            List<M1Point> p1s = new List<M1Point>();
+                            for (int i = 0; i < pastePoints.Count - 6; i++)
+                            {
+                                p1s.Add(pastePoints[i + 6]);
+                            }
+                            GTSCard.Instance.AxisLnXYZMove(p1s);
+                            stepnum = 15;
+                        }
+                        break;
+                    case 15:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 16;
+                        }
+                        break;
+                    case 16:
+                        {
+                            //取料
+                            List<M1Point> p1s = new List<M1Point>();
+                            for (int i = 0; i < pickPoints.Count - 1; i++)
+                            {
+                                p1s.Add(pickPoints[i]);
+                            }
+                            GTSCard.Instance.AxisLnXYZMove(p1s);
+                            stepnum = 17;
+                        }
+                        break;
+                    case 17:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 18;
+                        }
+                        break;
+                    case 18:
+                        {
+                            //取料飞拍
+                            List<M1Point> p1s = new List<M1Point>();
+                            p1s.Add(pickPoints[pickPoints.Count - 1]);
+                            GTSCard.Instance.AxisLnXYZMove(p1s);
+                            int[] Buf1 = new int[10];
+                            Buf1[0] = 1000;
+                            Buf1[1] = 5500;
+                            Buf1[2] = 10000;
+                            GTSCard.Instance.AxisCompare(2, Buf1, 3);
+                            stepnum = 19;
+                        }
+                        break;
+                    case 19:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 20;
+                        }
+                        break;
+                    case 20:
+                        {
+                            //贴
+                            List<M1Point> p1s = new List<M1Point>();
+                            for (int i = 0; i < pastePoints.Count - 6; i++)
+                            {
+                                p1s.Add(pastePoints[i + 6]);
+                            }
+                            GTSCard.Instance.AxisLnXYZMove(p1s);
+                            stepnum = 21;
+                        }
+                        break;
+                    case 21:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            stepnum = 22;
+                        }
+                        break;
+                    case 22:
                         if (GTSCard.Instance.AxisCheckCrdDone())
                         {
                             addMessage(DateTime.Now.ToString("HH:mm:ss:fff"));
