@@ -301,7 +301,14 @@ namespace CNCTestUI.ViewModels
         private DelegateCommand<object> operateButtonCommand;
         public DelegateCommand<object> OperateButtonCommand =>
             operateButtonCommand ?? (operateButtonCommand = new DelegateCommand<object>(ExecuteOperateButtonCommand));
+        private DelegateCommand grabTriggerCommand;
+        public DelegateCommand GrabTriggerCommand =>
+            grabTriggerCommand ?? (grabTriggerCommand = new DelegateCommand(ExecuteGrabTriggerCommand));
 
+        void ExecuteGrabTriggerCommand()
+        {
+            GTSCard.Instance.ComparePulseTrigger();
+        }
         async void ExecuteOperateButtonCommand(object obj)
         {
             switch (obj.ToString())
