@@ -558,6 +558,15 @@ namespace CNCTestUI.Models
             gts.mc.GT_GetAdc(1, adc, out pValue, 1, out pClock);
             return pValue;
         }
+        public void ComparePulseTrigger()
+        {
+            gts.mc.GT_ComparePulse(0, 1, 0, 100);//HSIO0输出100us的脉冲
+        }
+        public void AxisCompare(int[] Buf1, int count1)
+        {
+            int[] Buf2 = new int[20];
+            gts.mc.GT_CompareData(0, 1, 1, 0, 0, 100, ref Buf1[0], (short)count1, ref Buf2[0], 0);
+        }
         #endregion
     }
     #region 数据类型
