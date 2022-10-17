@@ -316,15 +316,20 @@ namespace CNCTestUI.ViewModels
                         GTSCard.Instance.ServoOn(GTSCard.Instance.R1);
                         IsAxisBusy = true;
                         await Task.Delay(200);
-                        List<M1Point> m1Points;
-                        using (var reader = new StreamReader(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Points.csv")))
+                        List<M1Point> pickPoints,pastePoints;
+                        using (var reader = new StreamReader(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "PickPoints.csv")))
                         using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                         {
-                            m1Points = csv.GetRecords<M1Point>().ToList();
+                            pickPoints = csv.GetRecords<M1Point>().ToList();
                         }
-                        if (m1Points.Count > 0)
+                        using (var reader = new StreamReader(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "PastePoints.csv")))
+                        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                         {
-                            await Task.Run(() => ALineMotion(token, m1Points), token).ContinueWith(t => IsAxisBusy = false);
+                            pastePoints = csv.GetRecords<M1Point>().ToList();
+                        }
+                        if (pickPoints.Count > 0 && pastePoints.Count > 0)
+                        {
+                            await Task.Run(() => ALineMotion(token, pickPoints, pastePoints), token).ContinueWith(t => IsAxisBusy = false);
                         }
                         else
                         {
@@ -338,10 +343,7 @@ namespace CNCTestUI.ViewModels
                     {
                         source.Cancel();
                     }
-                    GTSCard.Instance.AxisStop(GTSCard.Instance.X1, 1);
-                    GTSCard.Instance.AxisStop(GTSCard.Instance.Y1, 1);
-                    GTSCard.Instance.AxisStop(GTSCard.Instance.Z1, 1);
-                    GTSCard.Instance.AxisStop(GTSCard.Instance.R1, 1);
+                    GTSCard.Instance.AxisStop(0, 1);
                     IsAxisBusy = false;
                     break;
                 default:
@@ -488,7 +490,7 @@ namespace CNCTestUI.ViewModels
                 System.Threading.Thread.Sleep(100);
             }
         }
-        private void ALineMotion(CancellationToken token, List<M1Point> m1Points)
+        private void ALineMotion(CancellationToken token, List<M1Point> pickPoints, List<M1Point> pastePoints)
         {
             int stepnum = 0;
             Stopwatch sw = new Stopwatch();
@@ -510,14 +512,13 @@ namespace CNCTestUI.ViewModels
                     //        stepnum = 2;
                     //    }
                     //    break;
+                    //case 0:
+                    //    GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.X1, myParam.ToolPoint.X, myParam.X1RunSpeed);
+                    //    GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Y1, myParam.ToolPoint.Y, myParam.X1RunSpeed);
+                    //    GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.ToolPoint.Z, myParam.Z1RunSpeed);
+                    //    stepnum = 3;
+                    //    break;
                     case 0:
-                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.X1, myParam.ToolPoint.X, myParam.X1RunSpeed);
-                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Y1, myParam.ToolPoint.Y, myParam.X1RunSpeed);
-                        GTSCard.Instance.AxisPosMove(ref GTSCard.Instance.Z1, myParam.ToolPoint.Z, myParam.Z1RunSpeed);
-                        stepnum = 3;
-                        break;
-                    case 3:
-                        if (GTSCard.Instance.AxisCheckDone(GTSCard.Instance.X1) && GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Y1) && GTSCard.Instance.AxisCheckDone(GTSCard.Instance.Z1))
                         {
                             var r = GTSCard.Instance.SetCrd(myParam.ToolPoint.X, myParam.ToolPoint.Y, myParam.ToolPoint.Z);
                             if (!r)
@@ -532,10 +533,21 @@ namespace CNCTestUI.ViewModels
                         }
                         break;
                     case 4:
-                        GTSCard.Instance.AxisLnXYZMove(m1Points);
+                        GTSCard.Instance.AxisLnXYZMove(pickPoints);
                         stepnum = 5;
                         break;
                     case 5:
+                        if (GTSCard.Instance.AxisCheckCrdDone())
+                        {
+                            //addMessage(DateTime.Now.ToString("HH:mm:ss:fff"));
+                            stepnum = 6;
+                        }
+                        break;
+                    case 6:
+                        GTSCard.Instance.AxisLnXYZMove(pastePoints);
+                        stepnum = 7;
+                        break;
+                    case 7:
                         if (GTSCard.Instance.AxisCheckCrdDone())
                         {
                             addMessage(DateTime.Now.ToString("HH:mm:ss:fff"));

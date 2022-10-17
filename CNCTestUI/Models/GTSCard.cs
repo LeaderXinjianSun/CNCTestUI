@@ -548,6 +548,10 @@ namespace CNCTestUI.Models
         {
             gts.mc.GT_Stop(_AxisParam.CardNo, 1 << (_AxisParam.AxisId - 1), type << (_AxisParam.AxisId - 1));
         }
+        public void AxisStop(int ctr, int type)//type:1:紧急停止0:平滑停止
+        {
+            gts.mc.GT_Stop(0, 1 << 8 + ctr, type << 8 + ctr);
+        }
         public double GetAdc(short adc)
         {
             double pValue; uint pClock;
