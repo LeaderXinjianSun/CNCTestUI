@@ -571,18 +571,30 @@ namespace CNCTestUI.Models
             int[] Buf2 = new int[20];
             gts.mc.GT_CompareData(0, encoder, 1, 0, 0, 100, ref Buf1[0], (short)count1, ref Buf2[0], 0);
         }
-        public void AxisFollow(AxisParm master, AxisParm slave, double[,] data)
+        public void AxisFollow(AxisParm master, AxisParm slave1,AxisParm slave2, double[,] data)
         {
-            gts.mc.GT_PrfFollow(0, slave.AxisId, 0);
-            gts.mc.GT_FollowClear(0, slave.AxisId, 0);
-            gts.mc.GT_SetFollowMaster(0, slave.AxisId, master.AxisId, gts.mc.GEAR_MASTER_ENCODER, 0);
+            gts.mc.GT_PrfFollow(0, slave1.AxisId, 0);
+            gts.mc.GT_FollowClear(0, slave1.AxisId, 0);
+            gts.mc.GT_SetFollowMaster(0, slave1.AxisId, master.AxisId, gts.mc.GEAR_MASTER_ENCODER, 0);
             for (int i = 0; i < data.GetUpperBound(0) + 1; i++)
             {
-                gts.mc.GT_FollowData(0, slave.AxisId, (int)data[i, 0], data[i, 1], (short)data[i, 2], 0);
+                gts.mc.GT_FollowData(0, slave1.AxisId, (int)data[i, 0], data[i, 1], (short)data[i, 2], 0);
             }
-            gts.mc.GT_SetFollowLoop(0, slave.AxisId, 1);
-            gts.mc.GT_SetFollowEvent(0, slave.AxisId, gts.mc.FOLLOW_EVENT_START, 1, 0);
-            gts.mc.GT_FollowStart(0, 1 << (slave.AxisId - 1), 0 << (slave.AxisId - 1));
+            gts.mc.GT_SetFollowLoop(0, slave1.AxisId, 1);
+            gts.mc.GT_SetFollowEvent(0, slave1.AxisId, gts.mc.FOLLOW_EVENT_START, 1, 0);
+
+            gts.mc.GT_PrfFollow(0, slave2.AxisId, 0);
+            gts.mc.GT_FollowClear(0, slave2.AxisId, 0);
+            gts.mc.GT_SetFollowMaster(0, slave2.AxisId, master.AxisId, gts.mc.GEAR_MASTER_ENCODER, 0);
+            for (int i = 0; i < data.GetUpperBound(0) + 1; i++)
+            {
+                gts.mc.GT_FollowData(0, slave2.AxisId, (int)data[i, 0], data[i, 1], (short)data[i, 2], 0);
+            }
+            gts.mc.GT_SetFollowLoop(0, slave2.AxisId, 1);
+            gts.mc.GT_SetFollowEvent(0, slave2.AxisId, gts.mc.FOLLOW_EVENT_START, 1, 0);
+
+            gts.mc.GT_FollowStart(0, 1 << (slave1.AxisId - 1), 0 << (slave1.AxisId - 1));
+            gts.mc.GT_FollowStart(0, 1 << (slave2.AxisId - 1), 0 << (slave2.AxisId - 1));
         }
         public bool CheckFollowDone(AxisParm slave,int loop)
         {

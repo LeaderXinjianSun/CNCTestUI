@@ -721,7 +721,8 @@ namespace CNCTestUI.ViewModels
             double[,] data1 = new double[3, 3] { { 10000, 5000, 0 }, { 20000, 15000, 1 }, { 30000, 20000, 2 } };
             GTSCard.Instance.SigAxisPosZero(GTSCard.Instance.Z1);
             GTSCard.Instance.SigAxisPosZero(GTSCard.Instance.R1);
-            GTSCard.Instance.AxisFollow(GTSCard.Instance.Z1, GTSCard.Instance.R1, data1);
+            GTSCard.Instance.SigAxisPosZero(GTSCard.Instance.X1);
+            GTSCard.Instance.AxisFollow(GTSCard.Instance.Z1, GTSCard.Instance.R1, GTSCard.Instance.X1, data1);
             //GTSCard.Instance.AxisJog(GTSCard.Instance.Z1, 1, Z1JogSpeed);
             while (true)
             {
@@ -729,7 +730,7 @@ namespace CNCTestUI.ViewModels
                 {
                     return;
                 }
-                if (GTSCard.Instance.CheckFollowDone(GTSCard.Instance.R1,1))
+                if (GTSCard.Instance.CheckFollowDone(GTSCard.Instance.R1,1) && GTSCard.Instance.CheckFollowDone(GTSCard.Instance.X1, 1))
                 {
                     //System.Threading.Thread.Sleep(1000);
                     //GTSCard.Instance.AxisStop(GTSCard.Instance.Z1, 1);
