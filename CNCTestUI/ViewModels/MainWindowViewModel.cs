@@ -1240,7 +1240,7 @@ namespace CNCTestUI.ViewModels
             GTSCard.Instance.AxisStop(GTSCard.Instance.X1, 1);
             GTSCard.Instance.AxisStop(GTSCard.Instance.Y1, 1);
             GTSCard.Instance.AxisStop(GTSCard.Instance.Z1, 1);
-            GTSCard.Instance.AxisStop(GTSCard.Instance.R1, 1);
+            //GTSCard.Instance.AxisStop(GTSCard.Instance.R1, 1);
         }
         void ExecuteAxisHomeCommand()
         {
