@@ -602,6 +602,13 @@ namespace CNCTestUI.Models
             gts.mc.GT_GetFollowLoop(0,slave.AxisId,out pLoop);
             return pLoop == loop;
         }
+        public void AxisGear(AxisParm master, AxisParm slave)
+        {
+            gts.mc.GT_PrfGear(0, slave.AxisId, 0);
+            gts.mc.GT_SetGearMaster(0, slave.AxisId, master.AxisId, gts.mc.GEAR_MASTER_PROFILE, 0);
+            gts.mc.GT_SetGearRatio(0, slave.AxisId, 100, 100, 2);
+            gts.mc.GT_GearStart(0,1 << slave.AxisId - 1);
+        }
         #endregion
     }
     #region 数据类型

@@ -319,11 +319,12 @@ namespace CNCTestUI.ViewModels
                         CancellationToken token = source.Token;
                         GTSCard.Instance.ServoOn(GTSCard.Instance.X1);
                         GTSCard.Instance.ServoOn(GTSCard.Instance.Y1);
-                        GTSCard.Instance.ServoOff(GTSCard.Instance.Z1);
+                        GTSCard.Instance.ServoOn(GTSCard.Instance.Z1);
                         GTSCard.Instance.ServoOn(GTSCard.Instance.R1);
                         IsAxisBusy = true;
                         await Task.Delay(200);
-                        await Task.Run(() => FollowMotion(token), token).ContinueWith(t => IsAxisBusy = false);
+                        GTSCard.Instance.AxisGear(GTSCard.Instance.Z1, GTSCard.Instance.R1);
+                        //await Task.Run(() => FollowMotion(token), token).ContinueWith(t => IsAxisBusy = false);
                         //List<M1Point> pickPoints,pastePoints;
                         //using (var reader = new StreamReader(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "PickPoints.csv")))
                         //using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
